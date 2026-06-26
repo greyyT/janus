@@ -45,9 +45,11 @@ describe("loadBrainDocuments", () => {
   test("builds sorted deterministic documents with content hashes", async () => {
     const root = await createFixture();
     await mkdir(path.join(root, "brain", "archive"), { recursive: true });
+    await mkdir(path.join(root, "journal"), { recursive: true });
     await writeFile(path.join(root, "note.md"), "---\nproject: janus\ncreated: 2026-06-24\n---\n# Note", "utf8");
     await writeFile(path.join(root, "brain", "HOME.md"), "# Home", "utf8");
     await writeFile(path.join(root, "brain", "archive", "old.md"), "# Old", "utf8");
+    await writeFile(path.join(root, "journal", "2026-06-25.md"), "# Journal", "utf8");
 
     const documents = await loadBrainDocuments(root);
 
@@ -55,12 +57,13 @@ describe("loadBrainDocuments", () => {
       ["AGENTS.md", "protected_root"],
       ["brain/HOME.md", "wiki"],
       ["brain/archive/old.md", "archive"],
+      ["journal/2026-06-25.md", "journal"],
       ["note.md", "inbox"],
     ]);
     expect(documents.every((document) => /^[a-f0-9]{64}$/.test(document.document.content_hash))).toBe(true);
   });
 
-  test("creates inbox documents with created age and invalid-created warnings", async () => {
+  test("creates inbox documents with created age and keeps frontmatter_warnings", async () => {
     const root = await createFixture();
     await writeFile(path.join(root, "note.md"), "---\nproject: janus\ncreated: 2026-06-24\n---\n# Note", "utf8");
     await writeFile(path.join(root, "bad-date.md"), "---\ncreated: 2026-6-24\n---\n# Bad", "utf8");
@@ -79,5 +82,23 @@ describe("loadBrainDocuments", () => {
     expect(inboxDocuments.find((document) => document.path === "bad-date.md")?.frontmatter_warnings).toEqual([
       'invalid created date "2026-6-24"; expected YYYY-MM-DD',
     ]);
+  });
+
+  test.each([
+    ["2024-02-29.md", []],
+    ["2025-02-29.md", ["invalid_journal_date"]],
+    ["2026-13-01.md", ["invalid_journal_date"]],
+    ["2026-6-1.md", ["invalid_journal_filename"]],
+    ["random-note.md", ["invalid_journal_filename"]],
+  ])("validates journal filename %s", async (filename, warningCodes) => {
+    const root = await createFixture();
+    await mkdir(path.join(root, "journal"), { recursive: true });
+    await writeFile(path.join(root, "journal", filename), "# Journal", "utf8");
+
+    const documents = await loadBrainDocuments(root);
+    const journal = documents.find((document) => document.document.path === `journal/${filename}`);
+
+    expect(journal?.document.location_class).toBe("journal");
+    expect(journal?.document.warnings.map((warning) => warning.code)).toEqual(warningCodes);
   });
 });

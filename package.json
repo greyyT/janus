@@ -10,6 +10,7 @@
   "scripts": {
     "brain:inbox": "tsx tools/brain/inbox.ts",
     "brain:index": "tsx tools/brain/index.ts",
+    "brain:checkin": "tsx tools/brain/checkin.ts",
     "test": "vitest run"
   },
   "devDependencies": {

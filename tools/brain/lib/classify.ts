@@ -9,7 +9,7 @@ export const PROTECTED_ROOT_FILES = new Set([
   "SECURITY.md",
 ]);
 
-export type LocationClass = "protected_root" | "inbox" | "wiki" | "archive";
+export type LocationClass = "protected_root" | "journal" | "inbox" | "wiki" | "archive";
 
 export function isMarkdownBasename(basename: string): boolean {
   return basename.endsWith(".md");
@@ -25,6 +25,10 @@ export function classifyPath(relativePath: string): LocationClass | null {
 
   if (parts.length === 1) {
     return PROTECTED_ROOT_FILES.has(basename) ? "protected_root" : "inbox";
+  }
+
+  if (parts.length === 2 && parts[0] === "journal") {
+    return "journal";
   }
 
   if (parts[0] !== "brain") {

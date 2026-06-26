@@ -1,11 +1,24 @@
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { createHash } from "node:crypto";
 import { classifyPath, compareDocumentPaths, type LocationClass } from "./classify.js";
+import { parseCivilDate } from "./civil-date.js";
 import { discoverMarkdownFiles, type DiscoveredMarkdownFile } from "./filesystem.js";
-import { parseFrontmatter } from "./frontmatter.js";
+import { type FrontmatterWarning, parseFrontmatter } from "./frontmatter.js";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+export type DocumentWarningCode =
+  | "invalid_journal_filename"
+  | "invalid_journal_date"
+  | "malformed_frontmatter"
+  | "duplicate_frontmatter_key"
+  | "invalid_created_date";
+
+export interface DocumentWarning {
+  code: DocumentWarningCode;
+  message: string;
+}
 
 export interface BrainDocument {
   path: string;
@@ -13,7 +26,7 @@ export interface BrainDocument {
   title: string;
   frontmatter: Record<string, string>;
   content_hash: string;
-  frontmatter_warnings: string[];
+  warnings: DocumentWarning[];
 }
 
 export interface InboxDocument {
@@ -28,6 +41,7 @@ export interface InboxDocument {
 export interface LoadedDocument {
   document: BrainDocument;
   mtime: Date;
+  frontmatterWarnings: string[];
 }
 
 export async function loadBrainDocuments(repositoryRoot: string): Promise<LoadedDocument[]> {
@@ -44,11 +58,10 @@ export function toInboxDocument(loadedDocument: LoadedDocument, now: Date): Inbo
     return null;
   }
 
-  const warnings = [...loadedDocument.document.frontmatter_warnings];
+  const warnings = [...loadedDocument.frontmatterWarnings];
   const created = loadedDocument.document.frontmatter.created;
   const parsedCreated = created === undefined ? null : parseCreatedDate(created);
   const ageDate = parsedCreated ?? loadedDocument.mtime;
-
 
   const inboxDocument: InboxDocument = {
     path: loadedDocument.document.path,
@@ -71,25 +84,12 @@ export function calculateAgeDays(from: Date, now: Date): number {
 }
 
 export function parseCreatedDate(value: string): Date | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (match === null) {
+  const parsed = parseCivilDate(value);
+  if (parsed === null) {
     return null;
   }
 
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  if (
-    date.getUTCFullYear() !== year
-    || date.getUTCMonth() !== month - 1
-    || date.getUTCDate() !== day
-  ) {
-    return null;
-  }
-
-  return date;
+  return new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day));
 }
 
 export function resolveTitle(frontmatter: Record<string, string>, body: string, relativePath: string): string {
@@ -130,12 +130,19 @@ async function loadBrainDocument(file: DiscoveredMarkdownFile): Promise<LoadedDo
   const rawContent = await readFile(file.absolutePath);
   const content = rawContent.toString("utf8");
   const parsed = parseFrontmatter(content);
-
-  const warnings = [...parsed.warnings];
+  const frontmatterWarnings = parsed.warnings.map(formatFrontmatterWarningForInbox);
+  const warnings = parsed.warnings.map((warning) => toDocumentWarning(file.relativePath, warning));
   const created = parsed.frontmatter.created;
+
   if (created !== undefined && parseCreatedDate(created) === null) {
-    warnings.push(`invalid created date "${created}"; expected YYYY-MM-DD`);
+    frontmatterWarnings.push(`invalid created date "${created}"; expected YYYY-MM-DD`);
+    warnings.push({
+      code: "invalid_created_date",
+      message: `${file.relativePath}: invalid created date "${created}"; expected YYYY-MM-DD`,
+    });
   }
+
+  warnings.push(...getJournalWarnings(file.relativePath, locationClass));
 
   return {
     document: {
@@ -144,8 +151,48 @@ async function loadBrainDocument(file: DiscoveredMarkdownFile): Promise<LoadedDo
       title: resolveTitle(parsed.frontmatter, parsed.body, file.relativePath),
       frontmatter: parsed.frontmatter,
       content_hash: createHash("sha256").update(rawContent).digest("hex"),
-      frontmatter_warnings: warnings,
+      warnings,
     },
     mtime: file.mtime,
+    frontmatterWarnings,
   };
+}
+
+function getJournalWarnings(relativePath: string, locationClass: LocationClass): DocumentWarning[] {
+  if (locationClass !== "journal") {
+    return [];
+  }
+
+  const basename = path.posix.basename(relativePath, ".md");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(basename)) {
+    return [{
+      code: "invalid_journal_filename",
+      message: `${relativePath}: invalid journal filename; expected journal/YYYY-MM-DD.md`,
+    }];
+  }
+
+  if (parseCivilDate(basename) === null) {
+    return [{
+      code: "invalid_journal_date",
+      message: `${relativePath}: invalid journal date`,
+    }];
+  }
+
+  return [];
+}
+
+function toDocumentWarning(relativePath: string, warning: FrontmatterWarning): DocumentWarning {
+  const line = warning.line === undefined ? "" : `: line ${warning.line}`;
+  return {
+    code: warning.code,
+    message: `${relativePath}${line}: ${warning.message}`,
+  };
+}
+
+function formatFrontmatterWarningForInbox(warning: FrontmatterWarning): string {
+  if (warning.line === undefined) {
+    return warning.message;
+  }
+
+  return `line ${warning.line}: ${warning.message}`;
 }

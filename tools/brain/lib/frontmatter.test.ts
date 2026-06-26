@@ -19,7 +19,11 @@ describe("parseFrontmatter", () => {
 
     expect(result.frontmatter.project).toBe("janus");
     expect(result.warnings).toEqual([
-      'line 3: duplicate frontmatter key "project"; last value wins',
+      {
+        code: "duplicate_frontmatter_key",
+        line: 3,
+        message: 'duplicate frontmatter key "project"; last value wins',
+      },
     ]);
   });
 
@@ -30,7 +34,13 @@ describe("parseFrontmatter", () => {
       project: "janus",
       status: "active",
     });
-    expect(result.warnings).toEqual(["line 3: expected key: value"]);
+    expect(result.warnings).toEqual([
+      {
+        code: "malformed_frontmatter",
+        line: 3,
+        message: "expected key: value",
+      },
+    ]);
   });
 
   test("treats unclosed frontmatter as body and ignores metadata", () => {
@@ -39,7 +49,12 @@ describe("parseFrontmatter", () => {
 
     expect(result.frontmatter).toEqual({});
     expect(result.body).toBe(content);
-    expect(result.warnings).toEqual(["unclosed frontmatter block"]);
+    expect(result.warnings).toEqual([
+      {
+        code: "malformed_frontmatter",
+        message: "unclosed frontmatter block",
+      },
+    ]);
   });
 
   test("does not recognize frontmatter after a UTF-8 BOM", () => {

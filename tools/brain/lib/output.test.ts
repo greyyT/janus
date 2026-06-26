@@ -46,7 +46,7 @@ describe("createIndexSummary", () => {
   test("summarizes the generated index without returning document bodies", () => {
     const documents: BrainDocument[] = [
       document("AGENTS.md", "protected_root", []),
-      document("note.md", "inbox", ["warning"]),
+      document("note.md", "inbox", ["malformed_frontmatter"]),
       document("brain/HOME.md", "wiki", []),
       document("brain/archive/old.md", "archive", []),
     ];
@@ -56,6 +56,7 @@ describe("createIndexSummary", () => {
       document_count: 4,
       counts_by_location_class: {
         protected_root: 1,
+        journal: 0,
         inbox: 1,
         wiki: 1,
         archive: 1,
@@ -65,13 +66,13 @@ describe("createIndexSummary", () => {
   });
 });
 
-function document(path: BrainDocument["path"], location_class: BrainDocument["location_class"], frontmatter_warnings: string[]): BrainDocument {
+function document(path: BrainDocument["path"], location_class: BrainDocument["location_class"], warningCodes: BrainDocument["warnings"][number]["code"][]): BrainDocument {
   return {
     path,
     location_class,
     title: path,
     frontmatter: {},
     content_hash: "a".repeat(64),
-    frontmatter_warnings,
+    warnings: warningCodes.map((code) => ({ code, message: `${path}: ${code}` })),
   };
 }

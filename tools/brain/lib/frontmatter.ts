@@ -1,7 +1,15 @@
+export type FrontmatterWarningCode = "malformed_frontmatter" | "duplicate_frontmatter_key";
+
+export interface FrontmatterWarning {
+  code: FrontmatterWarningCode;
+  message: string;
+  line?: number;
+}
+
 export interface FrontmatterParseResult {
   frontmatter: Record<string, string>;
   body: string;
-  warnings: string[];
+  warnings: FrontmatterWarning[];
 }
 
 const KEY_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
@@ -23,12 +31,12 @@ export function parseFrontmatter(content: string): FrontmatterParseResult {
     return {
       frontmatter: {},
       body: content,
-      warnings: ["unclosed frontmatter block"],
+      warnings: [{ code: "malformed_frontmatter", message: "unclosed frontmatter block" }],
     };
   }
 
   const frontmatter: Record<string, string> = {};
-  const warnings: string[] = [];
+  const warnings: FrontmatterWarning[] = [];
 
   for (let index = 1; index < closingIndex; index += 1) {
     const line = lines[index] ?? "";
@@ -40,7 +48,11 @@ export function parseFrontmatter(content: string): FrontmatterParseResult {
     const separatorIndex = line.indexOf(":");
 
     if (separatorIndex === -1) {
-      warnings.push(`line ${index + 1}: expected key: value`);
+      warnings.push({
+        code: "malformed_frontmatter",
+        line: index + 1,
+        message: "expected key: value",
+      });
       continue;
     }
 
@@ -48,12 +60,20 @@ export function parseFrontmatter(content: string): FrontmatterParseResult {
     const value = line.slice(separatorIndex + 1).trim();
 
     if (!KEY_PATTERN.test(key)) {
-      warnings.push(`line ${index + 1}: invalid frontmatter key "${key}"`);
+      warnings.push({
+        code: "malformed_frontmatter",
+        line: index + 1,
+        message: `invalid frontmatter key "${key}"`,
+      });
       continue;
     }
 
     if (Object.hasOwn(frontmatter, key)) {
-      warnings.push(`line ${index + 1}: duplicate frontmatter key "${key}"; last value wins`);
+      warnings.push({
+        code: "duplicate_frontmatter_key",
+        line: index + 1,
+        message: `duplicate frontmatter key "${key}"; last value wins`,
+      });
     }
 
     frontmatter[key] = value;

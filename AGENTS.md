@@ -4,8 +4,9 @@ Janus is a Markdown-first personal engineering knowledge system.
 
 ## Knowledge locations
 
+- `journal/` contains dated daily journals for chronological working memory, daily tasks, notes, and check-ins.
 - `brain/` contains promoted, durable wiki knowledge.
-- Non-default Markdown files placed directly in the repository root are inbox notes.
+- Non-default Markdown files placed directly in the repository root are standalone inbox captures.
 - Root inbox notes are temporary and may be incomplete, incorrect, or unverified.
 - Source code and repository-local documentation remain authoritative for code behavior.
 
@@ -13,8 +14,9 @@ Janus is a Markdown-first personal engineering knowledge system.
 
 1. Source code and repository-local documentation.
 2. Promoted Janus wiki notes under `brain/`.
-3. Root inbox notes.
-4. Generated indexes, embeddings, summaries, and harness auto-memory.
+3. Journal notes under `journal/` as chronological personal records.
+4. Root inbox notes.
+5. Generated indexes, embeddings, summaries, and harness auto-memory.
 
 ## Before making a technical decision
 
@@ -26,9 +28,10 @@ Janus is a Markdown-first personal engineering knowledge system.
 
 ## Capturing knowledge
 
-- For rough thoughts, create a Markdown file directly in the Janus root.
+- Use today's `journal/YYYY-MM-DD.md` note for daily working memory, tasks, rough notes, and lightweight follow-ups.
+- For standalone thoughts, articles, ideas, or topics that deserve their own identity, create a Markdown file directly in the Janus root.
 - Do not require frontmatter, tags, templates, or classification for root notes.
-- Do not store durable technical facts only in a root inbox note.
+- Do not store durable technical facts only in a root inbox note or journal note.
 - Promote durable and verified knowledge into `brain/`.
 - Delete low-value or obsolete inbox notes rather than organizing everything.
 
@@ -46,6 +49,7 @@ When promoting a root note:
 
 - Do not treat inbox notes as verified facts.
 - Do not create a separate `brain/inbox/` folder.
+- Do not place journal workflow documentation inside `journal/`.
 - Do not index secrets, keys, credentials, or sensitive production data.
 - Do not duplicate repository-owned architecture documentation.
 - Do not load the whole knowledge base into context by default.

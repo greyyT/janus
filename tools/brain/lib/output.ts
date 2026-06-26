@@ -10,7 +10,7 @@ export interface InboxJsonOutput {
 }
 
 export interface BrainIndex {
-  schema_version: 1;
+  schema_version: 2;
   documents: BrainDocument[];
 }
 
@@ -42,18 +42,12 @@ export function createInboxJsonOutput(documents: InboxDocument[]): InboxJsonOutp
 }
 
 export function createIndexSummary(outputPath: string, documents: BrainDocument[]): IndexJsonSummary {
-  const counts_by_location_class: Record<LocationClass, number> = {
-    protected_root: 0,
-    inbox: 0,
-    wiki: 0,
-    archive: 0,
-  };
-
+  const counts_by_location_class = createEmptyLocationCounts();
   let warningCount = 0;
 
   for (const document of documents) {
     counts_by_location_class[document.location_class] += 1;
-    warningCount += document.frontmatter_warnings.length;
+    warningCount += document.warnings.length;
   }
 
   return {
@@ -91,11 +85,22 @@ export function formatIndexHuman(summary: IndexJsonSummary): string {
     `Wrote ${summary.output_path}`,
     `Documents: ${summary.document_count}`,
     `protected_root: ${summary.counts_by_location_class.protected_root}`,
+    `journal: ${summary.counts_by_location_class.journal}`,
     `inbox: ${summary.counts_by_location_class.inbox}`,
     `wiki: ${summary.counts_by_location_class.wiki}`,
     `archive: ${summary.counts_by_location_class.archive}`,
     `Warnings: ${summary.warning_count}`,
   ].join("\n");
+}
+
+function createEmptyLocationCounts(): Record<LocationClass, number> {
+  return {
+    protected_root: 0,
+    journal: 0,
+    inbox: 0,
+    wiki: 0,
+    archive: 0,
+  };
 }
 
 function formatHygieneStatus(status: InboxHygieneStatus): string {
@@ -105,7 +110,5 @@ function formatHygieneStatus(status: InboxHygieneStatus): string {
 }
 
 function formatAge(ageDays: number): string {
-  if (ageDays === 0) return "today";
-  if (ageDays === 1) return "1 day";
-  return `${ageDays} days`;
+  return ageDays === 1 ? "1 day old" : `${ageDays} days old`;
 }

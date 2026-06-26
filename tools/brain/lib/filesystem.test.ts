@@ -32,6 +32,7 @@ describe("discoverMarkdownFiles", () => {
     await mkdir(path.join(root, "brain", "archive"), { recursive: true });
     await mkdir(path.join(root, "docs"), { recursive: true });
     await mkdir(path.join(root, "brainx"), { recursive: true });
+    await mkdir(path.join(root, "journal", "nested"), { recursive: true });
     await writeFile(path.join(root, "README.MD"), "# Upper", "utf8");
     await writeFile(path.join(root, "notes.md.bak"), "# Backup", "utf8");
     await writeFile(path.join(root, ".scratch.md"), "# Scratch", "utf8");
@@ -39,6 +40,9 @@ describe("discoverMarkdownFiles", () => {
     await writeFile(path.join(root, "brain", "archive", "a.md"), "# A", "utf8");
     await writeFile(path.join(root, "brainx", "example.md"), "# Brainx", "utf8");
     await writeFile(path.join(root, "docs", "example.md"), "# Docs", "utf8");
+    await writeFile(path.join(root, "journal", "2026-06-25.md"), "# Journal", "utf8");
+    await writeFile(path.join(root, "journal", "random-note.md"), "# Random", "utf8");
+    await writeFile(path.join(root, "journal", "nested", "2026-06-25.md"), "# Nested", "utf8");
     await mkdir(path.join(root, "directory.md"));
 
     const files = await discoverMarkdownFiles(root);
@@ -48,17 +52,22 @@ describe("discoverMarkdownFiles", () => {
       "AGENTS.md",
       "brain/archive.md",
       "brain/archive/a.md",
+      "journal/2026-06-25.md",
+      "journal/random-note.md",
     ]);
   });
 
   test("ignores symlinked markdown files when the platform supports symlinks", async () => {
     const root = await createFixture();
+    await mkdir(path.join(root, "journal"), { recursive: true });
     const target = path.join(root, "target.txt");
-    const link = path.join(root, "linked.md");
+    const rootLink = path.join(root, "linked.md");
+    const journalLink = path.join(root, "journal", "linked.md");
     await writeFile(target, "# Target", "utf8");
 
     try {
-      await symlink(target, link);
+      await symlink(target, rootLink);
+      await symlink(target, journalLink);
     } catch {
       return;
     }
@@ -66,6 +75,7 @@ describe("discoverMarkdownFiles", () => {
     const files = await discoverMarkdownFiles(root);
 
     expect(files.map((file) => file.relativePath)).not.toContain("linked.md");
+    expect(files.map((file) => file.relativePath)).not.toContain("journal/linked.md");
   });
 });
 

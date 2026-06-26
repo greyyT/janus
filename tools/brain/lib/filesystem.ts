@@ -18,7 +18,7 @@ export async function resolveRepositoryRoot(startDirectory = process.cwd()): Pro
 
     const parent = path.dirname(current);
     if (parent === current) {
-      throw new Error("Could not resolve Janus repository root: expected package.json and AGENTS.md in an ancestor directory");
+      throw new Error("Could not resolve Janus repository root");
     }
 
     current = parent;
@@ -27,8 +27,49 @@ export async function resolveRepositoryRoot(startDirectory = process.cwd()): Pro
 
 export async function discoverMarkdownFiles(repositoryRoot: string): Promise<DiscoveredMarkdownFile[]> {
   const rootFiles = await discoverRootMarkdownFiles(repositoryRoot);
+  const journalFiles = await discoverJournalMarkdownFiles(repositoryRoot);
   const brainFiles = await discoverBrainMarkdownFiles(repositoryRoot);
-  return [...rootFiles, ...brainFiles];
+  return [...rootFiles, ...journalFiles, ...brainFiles];
+}
+
+export async function discoverJournalMarkdownFiles(repositoryRoot: string): Promise<DiscoveredMarkdownFile[]> {
+  const journalPath = path.join(repositoryRoot, "journal");
+
+  try {
+    const stats = await lstat(journalPath);
+    if (!stats.isDirectory() || stats.isSymbolicLink()) {
+      return [];
+    }
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return [];
+    }
+    throw error;
+  }
+
+  const entries = await readdir(journalPath, { withFileTypes: true });
+  const files: DiscoveredMarkdownFile[] = [];
+
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) {
+      continue;
+    }
+
+    const absolutePath = path.join(journalPath, entry.name);
+    const stats = await lstat(absolutePath);
+
+    if (!stats.isFile() || stats.isSymbolicLink()) {
+      continue;
+    }
+
+    files.push({
+      absolutePath,
+      relativePath: toPosixRelativePath(repositoryRoot, absolutePath),
+      mtime: stats.mtime,
+    });
+  }
+
+  return files;
 }
 
 export function toPosixRelativePath(repositoryRoot: string, absolutePath: string): string {
@@ -45,25 +86,19 @@ export async function writeJsonAtomically(outputPath: string, value: unknown): P
   );
 
   try {
-    const content = `${JSON.stringify(value, null, 2)}\n`;
-    await writeFile(temporaryPath, content, "utf8");
+    await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
     await rename(temporaryPath, outputPath);
   } catch (error) {
-    await rm(temporaryPath, { force: true }).catch(() => undefined);
+    await rm(temporaryPath, { force: true });
     throw error;
   }
 }
 
 async function containsRepositoryMarkers(directory: string): Promise<boolean> {
-  const packagePath = path.join(directory, "package.json");
-  const agentsPath = path.join(directory, "AGENTS.md");
+  const packageJson = path.join(directory, "package.json");
+  const agentsFile = path.join(directory, "AGENTS.md");
 
-  const [hasPackage, hasAgents] = await Promise.all([
-    canRead(packagePath),
-    canRead(agentsPath),
-  ]);
-
-  return hasPackage && hasAgents;
+  return await canRead(packageJson) && await canRead(agentsFile);
 }
 
 async function canRead(filePath: string): Promise<boolean> {

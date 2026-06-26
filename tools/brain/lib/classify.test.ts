@@ -12,6 +12,14 @@ describe("classifyPath", () => {
     ["docs/example.md", null],
     ["AGENTS.md", "protected_root"],
     ["agents.md", "inbox"],
+    ["journal/2026-06-25.md", "journal"],
+    ["journal/2024-02-29.md", "journal"],
+    ["journal/2025-02-29.md", "journal"],
+    ["journal/2026-13-01.md", "journal"],
+    ["journal/2026-6-1.md", "journal"],
+    ["journal/random-note.md", "journal"],
+    ["journal/nested/2026-06-25.md", null],
+    ["2026-06-25.md", "inbox"],
   ] as const)("classifies %s", (relativePath, expected) => {
     expect(classifyPath(relativePath)).toBe(expected);
   });

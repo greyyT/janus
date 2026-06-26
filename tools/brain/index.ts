@@ -11,7 +11,7 @@ async function main(): Promise<void> {
     const loadedDocuments = await loadBrainDocuments(repositoryRoot);
     const documents = loadedDocuments.map((loadedDocument) => loadedDocument.document);
     const index: BrainIndex = {
-      schema_version: 1,
+      schema_version: 2,
       documents,
     };
 
