@@ -39,12 +39,13 @@ Markdown remains canonical. Generated data is disposable and lower authority tha
 
 ## Tooling model
 
-The v0.1 tooling is intentionally small:
+The v0.2 tooling remains intentionally small:
 
 - `pnpm brain:inbox` discovers and reports root inbox notes;
+- `pnpm brain:digest:init` creates or resumes `.janus/digest-ledger.md` from the same root inbox queue used by `brain:inbox`;
 - `pnpm brain:index` scans Markdown knowledge files and writes `data/brain-index.json`;
 - `pnpm brain:checkin` reads journal Markdown directly and reports wellbeing check-ins;
-- shared behavior lives under `tools/brain/lib/` so tools reuse discovery, parsing, and classification rules.
+- shared behavior lives under `tools/brain/lib/` so tools reuse discovery, parsing, classification, and queue rules.
 
 `brain:checkin` does not read, require, or trust `data/brain-index.json`. Journal Markdown remains canonical when the generated index is stale or absent.
 

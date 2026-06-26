@@ -11,6 +11,7 @@
     "brain:inbox": "tsx tools/brain/inbox.ts",
     "brain:index": "tsx tools/brain/index.ts",
     "brain:checkin": "tsx tools/brain/checkin.ts",
+    "brain:digest:init": "tsx tools/brain/digest-init.ts",
     "test": "vitest run"
   },
   "devDependencies": {

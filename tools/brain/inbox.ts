@@ -1,14 +1,11 @@
-import { createInboxJsonOutput, formatInboxHuman, loadBrainDocuments, resolveRepositoryRoot, toInboxDocument } from "./lib/index.js";
+import { createInboxJsonOutput, formatInboxHuman, listInboxDocuments, resolveRepositoryRoot } from "./lib/index.js";
 
 async function main(): Promise<void> {
   const isJson = process.argv.includes("--json");
 
   try {
     const repositoryRoot = await resolveRepositoryRoot();
-    const loadedDocuments = await loadBrainDocuments(repositoryRoot);
-    const documents = loadedDocuments
-      .map((document) => toInboxDocument(document, new Date()))
-      .filter((document) => document !== null);
+    const documents = await listInboxDocuments(repositoryRoot);
     const output = createInboxJsonOutput(documents);
 
     if (isJson) {

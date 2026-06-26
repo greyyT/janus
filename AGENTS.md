@@ -9,6 +9,7 @@ Janus is a Markdown-first personal engineering knowledge system.
 - Non-default Markdown files placed directly in the repository root are standalone inbox captures.
 - Root inbox notes are temporary and may be incomplete, incorrect, or unverified.
 - Source code and repository-local documentation remain authoritative for code behavior.
+- `.janus/digest-ledger.md` is local operational checklist state for `/digest`; it is not durable knowledge.
 
 ## Source-of-truth hierarchy
 
@@ -44,6 +45,7 @@ When promoting a root note:
 3. Add frontmatter and a stable title.
 4. Link it from the relevant project index.
 5. Preserve important history; archive rather than silently erasing superseded decisions.
+6. Archive approved promoted root captures under `brain/archive/inbox/`; if the destination exists, stop and ask before writing.
 
 ## Do not
 

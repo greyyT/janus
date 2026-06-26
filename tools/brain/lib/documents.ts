@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { classifyPath, compareDocumentPaths, type LocationClass } from "./classify.js";
 import { parseCivilDate } from "./civil-date.js";
-import { discoverMarkdownFiles, type DiscoveredMarkdownFile } from "./filesystem.js";
+import { discoverMarkdownFiles, discoverRootMarkdownFiles, type DiscoveredMarkdownFile } from "./filesystem.js";
 import { type FrontmatterWarning, parseFrontmatter } from "./frontmatter.js";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
@@ -51,6 +51,17 @@ export async function loadBrainDocuments(repositoryRoot: string): Promise<Loaded
   return documents
     .filter((document): document is LoadedDocument => document !== null)
     .sort((a, b) => compareDocumentPaths(a.document.path, b.document.path));
+}
+
+export async function listInboxDocuments(repositoryRoot: string, now = new Date()): Promise<InboxDocument[]> {
+  const files = await discoverRootMarkdownFiles(repositoryRoot);
+  const documents = await Promise.all(files.map(loadBrainDocument));
+
+  return documents
+    .filter((document): document is LoadedDocument => document !== null)
+    .map((document) => toInboxDocument(document, now))
+    .filter((document): document is InboxDocument => document !== null)
+    .sort((a, b) => compareDocumentPaths(a.path, b.path));
 }
 
 export function toInboxDocument(loadedDocument: LoadedDocument, now: Date): InboxDocument | null {

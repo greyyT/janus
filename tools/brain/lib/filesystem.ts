@@ -76,7 +76,7 @@ export function toPosixRelativePath(repositoryRoot: string, absolutePath: string
   return path.relative(repositoryRoot, absolutePath).split(path.sep).join("/");
 }
 
-export async function writeJsonAtomically(outputPath: string, value: unknown): Promise<void> {
+export async function writeTextAtomically(outputPath: string, content: string): Promise<void> {
   const outputDirectory = path.dirname(outputPath);
   await mkdir(outputDirectory, { recursive: true });
 
@@ -86,12 +86,16 @@ export async function writeJsonAtomically(outputPath: string, value: unknown): P
   );
 
   try {
-    await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+    await writeFile(temporaryPath, content, "utf8");
     await rename(temporaryPath, outputPath);
   } catch (error) {
     await rm(temporaryPath, { force: true });
     throw error;
   }
+}
+
+export async function writeJsonAtomically(outputPath: string, value: unknown): Promise<void> {
+  await writeTextAtomically(outputPath, `${JSON.stringify(value, null, 2)}\n`);
 }
 
 async function containsRepositoryMarkers(directory: string): Promise<boolean> {
@@ -110,7 +114,7 @@ async function canRead(filePath: string): Promise<boolean> {
   }
 }
 
-async function discoverRootMarkdownFiles(repositoryRoot: string): Promise<DiscoveredMarkdownFile[]> {
+export async function discoverRootMarkdownFiles(repositoryRoot: string): Promise<DiscoveredMarkdownFile[]> {
   const entries = await readdir(repositoryRoot, { withFileTypes: true });
   const files: DiscoveredMarkdownFile[] = [];
 

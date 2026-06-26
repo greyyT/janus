@@ -1,6 +1,7 @@
 export * from "./civil-date.js";
 export * from "./classify.js";
 export * from "./documents.js";
+export * from "./digest.js";
 export * from "./filesystem.js";
 export * from "./frontmatter.js";
 export * from "./journal.js";
