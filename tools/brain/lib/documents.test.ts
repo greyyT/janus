@@ -47,6 +47,7 @@ describe("loadBrainDocuments", () => {
     await mkdir(path.join(root, "brain", "archive"), { recursive: true });
     await mkdir(path.join(root, "journal"), { recursive: true });
     await writeFile(path.join(root, "note.md"), "---\nproject: janus\ncreated: 2026-06-24\n---\n# Note", "utf8");
+    await writeFile(path.join(root, "backlog.md"), "# Backlog\n\n<!-- janus-backlog: next_task_id=1 -->", "utf8");
     await writeFile(path.join(root, "brain", "HOME.md"), "# Home", "utf8");
     await writeFile(path.join(root, "brain", "archive", "old.md"), "# Old", "utf8");
     await writeFile(path.join(root, "journal", "2026-06-25.md"), "# Journal", "utf8");
@@ -55,6 +56,7 @@ describe("loadBrainDocuments", () => {
 
     expect(documents.map((document) => [document.document.path, document.document.location_class])).toEqual([
       ["AGENTS.md", "protected_root"],
+      ["backlog.md", "protected_root"],
       ["brain/HOME.md", "wiki"],
       ["brain/archive/old.md", "archive"],
       ["journal/2026-06-25.md", "journal"],
@@ -68,6 +70,7 @@ describe("loadBrainDocuments", () => {
     await writeFile(path.join(root, "note.md"), "---\nproject: janus\ncreated: 2026-06-24\n---\n# Note", "utf8");
     await writeFile(path.join(root, "bad-date.md"), "---\ncreated: 2026-6-24\n---\n# Bad", "utf8");
 
+    await writeFile(path.join(root, "backlog.md"), "# Backlog\n\n<!-- janus-backlog: next_task_id=1 -->", "utf8");
     const loadedDocuments = await loadBrainDocuments(root);
     const inboxDocuments = loadedDocuments
       .map((document) => toInboxDocument(document, new Date("2026-06-26T00:00:00.000Z")))
@@ -82,6 +85,7 @@ describe("loadBrainDocuments", () => {
     expect(inboxDocuments.find((document) => document.path === "bad-date.md")?.frontmatter_warnings).toEqual([
       'invalid created date "2026-6-24"; expected YYYY-MM-DD',
     ]);
+    expect(inboxDocuments.map((document) => document.path)).not.toContain("backlog.md");
   });
 
   test.each([

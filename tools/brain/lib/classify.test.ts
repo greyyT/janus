@@ -11,6 +11,7 @@ describe("classifyPath", () => {
     ["brainx/example.md", null],
     ["docs/example.md", null],
     ["AGENTS.md", "protected_root"],
+    ["backlog.md", "protected_root"],
     ["agents.md", "inbox"],
     ["journal/2026-06-25.md", "journal"],
     ["journal/2024-02-29.md", "journal"],

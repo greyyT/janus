@@ -4,12 +4,14 @@ Janus is a Markdown-first personal engineering knowledge system.
 
 ## Knowledge locations
 
-- `journal/` contains dated daily journals for chronological working memory, daily tasks, notes, and check-ins.
+- `journal/` contains dated daily journals for chronological working memory, daily tasks, notes, check-ins, and checkout reflections.
+- `backlog.md` is the protected root queue of unresolved, uncommitted tasks.
 - `brain/` contains promoted, durable wiki knowledge.
-- Non-default Markdown files placed directly in the repository root are standalone inbox captures.
+- Non-default Markdown files placed directly in the repository root are standalone inbox captures unless protected.
 - Root inbox notes are temporary and may be incomplete, incorrect, or unverified.
 - Source code and repository-local documentation remain authoritative for code behavior.
 - `.janus/digest-ledger.md` is local operational checklist state for `/digest`; it is not durable knowledge.
+- `.janus/calendar/` is local optional calendar input for `/checkin`; it is not durable knowledge.
 
 ## Source-of-truth hierarchy
 
@@ -29,10 +31,11 @@ Janus is a Markdown-first personal engineering knowledge system.
 
 ## Capturing knowledge
 
-- Use today's `journal/YYYY-MM-DD.md` note for daily working memory, tasks, rough notes, and lightweight follow-ups.
+- Use today's `journal/YYYY-MM-DD.md` note for daily working memory, committed task blocks, rough notes, check-ins, checkout reflections, and lightweight follow-ups.
+- Use `backlog.md` for unresolved tasks that should survive beyond today but are not committed to a journal.
 - For standalone thoughts, articles, ideas, or topics that deserve their own identity, create a Markdown file directly in the Janus root.
 - Do not require frontmatter, tags, templates, or classification for root notes.
-- Do not store durable technical facts only in a root inbox note or journal note.
+- Do not store durable technical facts only in a root inbox note, backlog task, or journal note.
 - Promote durable and verified knowledge into `brain/`.
 - Delete low-value or obsolete inbox notes rather than organizing everything.
 
@@ -51,6 +54,7 @@ When promoting a root note:
 
 - Do not treat inbox notes as verified facts.
 - Do not create a separate `brain/inbox/` folder.
+- Do not treat `backlog.md` as an inbox note.
 - Do not place journal workflow documentation inside `journal/`.
 - Do not index secrets, keys, credentials, or sensitive production data.
 - Do not duplicate repository-owned architecture documentation.

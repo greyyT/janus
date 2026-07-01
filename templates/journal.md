@@ -6,12 +6,25 @@ kind: journal
 
 # {{date:YYYY-MM-DD}}
 
+## Check-in
+
+- capacity:
+- primary_outcome:
+- calendar_summary:
+- constraints:
+
 ## Todo
 
 - [ ]
 
 ## Notes
 
-## Check-in
+## Checkout
 
 - wellbeing:
+- worked:
+- improve:
+- handoff:
+- next_step:
+- task_decisions:
+- digest:

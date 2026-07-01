@@ -1,0 +1,30 @@
+{
+  "date": "2026-07-01",
+  "capacity": "high — 3+ focused hours",
+  "primary_outcome": "Deploy new-design-system React package",
+  "calendar_summary": "Unavailable: no local calendar export found at .janus/calendar/primary.ics or .janus/calendar/config.json.",
+  "constraints": "None stated.",
+  "selected_task_ids": [
+    "J-001"
+  ],
+  "task_plans": [
+    {
+      "task_id": "J-001",
+      "title": "Deploy new-design-system react package",
+      "done_for_today": "Package deployed.",
+      "first_step": "Ask Tino for the deployment key.",
+      "steps": [
+        "Ask Tino for the deployment key.",
+        "Spawn an agent to clone an existing deploy CI.",
+        "Rewrite the deploy CI to match the new-design-system React package repository.",
+        "Run the deploy workflow and verify the package is deployed."
+      ],
+      "risks": [
+        "Deployment key access depends on Tino.",
+        "CI template may need repository-specific package manager, build, or publish adjustments."
+      ],
+      "stopping_point": "Stop when the package is deployed, or if access is blocked, record the exact missing key/request state for checkout."
+    }
+  ],
+  "carryover": []
+}

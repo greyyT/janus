@@ -10,8 +10,13 @@
   "scripts": {
     "brain:inbox": "tsx tools/brain/inbox.ts",
     "brain:index": "tsx tools/brain/index.ts",
-    "brain:checkin": "tsx tools/brain/checkin.ts",
     "brain:digest:init": "tsx tools/brain/digest-init.ts",
+    "brain:calendar": "tsx tools/brain/calendar.ts",
+    "brain:task:add": "tsx tools/brain/task-add.ts",
+    "brain:task:list": "tsx tools/brain/task-list.ts",
+    "brain:task:move": "tsx tools/brain/task-move.ts",
+    "brain:task:checkin": "tsx tools/brain/task-checkin.ts",
+    "brain:task:checkout": "tsx tools/brain/task-checkout.ts",
     "test": "vitest run"
   },
   "devDependencies": {
