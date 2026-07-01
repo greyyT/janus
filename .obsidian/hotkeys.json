@@ -1,0 +1,11 @@
+{
+  "editor:open-search": [],
+  "vimium:show-markers": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": "F"
+    }
+  ]
+}

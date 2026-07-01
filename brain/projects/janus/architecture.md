@@ -5,6 +5,7 @@
 ```text
 janus/
 ├── AGENTS.md
+├── backlog.md
 ├── journal/
 │   ├── .gitkeep
 │   └── YYYY-MM-DD.md
@@ -15,39 +16,44 @@ janus/
 │           ├── INDEX.md
 │           ├── architecture.md
 │           ├── journal-workflow.md
+│           ├── daily-workflow.md
 │           ├── vision.md
 │           ├── decisions/
 │           └── sketches/
 ├── templates/
 │   └── journal.md
 ├── data/
+├── .janus/
+│   └── calendar/
 └── tools/
     └── brain/
 ```
 
 ## Knowledge model
 
-Janus separates chronological working memory, capture, and durable memory:
+Janus separates chronological working memory, task commitment, capture, and durable memory:
 
 - `journal/` stores dated daily notes for chronological working memory;
-- repository-root Markdown files are standalone inbox captures;
+- `backlog.md` stores unresolved, uncommitted tasks and is a protected root file;
+- repository-root Markdown files are standalone inbox captures unless protected;
 - protected root Markdown files are not inbox notes;
 - `brain/` stores promoted durable knowledge;
 - `data/` stores generated local indexes.
 
 Markdown remains canonical. Generated data is disposable and lower authority than the Markdown files it describes.
 
+Generated indexes include Markdown document metadata only. Task state, calendar contents, journal todos, checkout reflections, and digest outcomes are not emitted as parsed index records.
+
 ## Tooling model
 
-The v0.2 tooling remains intentionally small:
+The v0.3 tooling remains intentionally small:
 
 - `pnpm brain:inbox` discovers and reports root inbox notes;
 - `pnpm brain:digest:init` creates or resumes `.janus/digest-ledger.md` from the same root inbox queue used by `brain:inbox`;
 - `pnpm brain:index` scans Markdown knowledge files and writes `data/brain-index.json`;
-- `pnpm brain:checkin` reads journal Markdown directly and reports wellbeing check-ins;
-- shared behavior lives under `tools/brain/lib/` so tools reuse discovery, parsing, classification, and queue rules.
-
-`brain:checkin` does not read, require, or trust `data/brain-index.json`. Journal Markdown remains canonical when the generated index is stale or absent.
+- `pnpm brain:calendar` reads the optional local calendar export and reports planning-day availability;
+- `pnpm brain:task:add`, `brain:task:list`, `brain:task:move`, `brain:task:checkin`, and `brain:task:checkout` perform deterministic task and journal mutations for slash workflows;
+- shared behavior lives under `tools/brain/lib/` so tools reuse discovery, parsing, classification, calendar, task, and queue rules.
 
 ## Index classes
 

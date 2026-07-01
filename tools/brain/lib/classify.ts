@@ -1,6 +1,7 @@
 export const PROTECTED_ROOT_FILES = new Set([
   "AGENTS.md",
   "CLAUDE.md",
+  "backlog.md",
   "README.md",
   "CONTRIBUTING.md",
   "LICENSE.md",
