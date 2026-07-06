@@ -22,9 +22,32 @@ kind: journal
 ## Checkout
 
 - wellbeing:
-- worked:
-- improve:
 - handoff:
 - next_step:
 - task_decisions:
 - digest:
+
+### What worked
+
+> What helped you make progress today?
+> Example: A focused morning block made the checkout flow easier to reason about.
+
+### What could improve
+
+> What caused friction or should change next time?
+> Example: The checkout questions still felt too generic before the journal draft existed.
+
+### Memorable moments
+
+> What moments from today are worth remembering?
+> Example: A small conversation clarified what the workflow should feel like.
+
+### Grateful for
+
+> What are you grateful for today?
+> Example: Enough uninterrupted time to finish one concrete improvement.
+
+### Achievements
+
+> What did you accomplish today, including small wins?
+> Example: Shipped a safer checkout prompt and verified the focused path.

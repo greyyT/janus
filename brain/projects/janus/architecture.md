@@ -6,6 +6,7 @@
 janus/
 ├── AGENTS.md
 ├── backlog.md
+├── commands.md
 ├── journal/
 │   ├── .gitkeep
 │   └── YYYY-MM-DD.md
@@ -35,8 +36,8 @@ Janus separates chronological working memory, task commitment, capture, and dura
 
 - `journal/` stores dated daily notes for chronological working memory;
 - `backlog.md` stores unresolved, uncommitted tasks and is a protected root file;
+- `commands.md` documents package commands and is a protected root file;
 - repository-root Markdown files are standalone inbox captures unless protected;
-- protected root Markdown files are not inbox notes;
 - `brain/` stores promoted durable knowledge;
 - `data/` stores generated local indexes.
 
@@ -48,11 +49,14 @@ Generated indexes include Markdown document metadata only. Task state, calendar 
 
 The v0.3 tooling remains intentionally small:
 
+- `commands.md` documents every script declared in `package.json`;
 - `pnpm brain:inbox` discovers and reports root inbox notes;
 - `pnpm brain:digest:init` creates or resumes `.janus/digest-ledger.md` from the same root inbox queue used by `brain:inbox`;
 - `pnpm brain:index` scans Markdown knowledge files and writes `data/brain-index.json`;
-- `pnpm brain:calendar` reads the optional local calendar export and reports planning-day availability;
-- `pnpm brain:task:add`, `brain:task:list`, `brain:task:move`, `brain:task:checkin`, and `brain:task:checkout` perform deterministic task and journal mutations for slash workflows;
+- `pnpm brain:calendar` live-fetches configured read-only iCalendar feeds, merges planning-day availability, and falls back to the legacy local calendar export when no feed list is configured;
+- `pnpm brain:journal:create` creates or opens a dated journal note idempotently;
+- `pnpm brain:task:pending` creates or resumes the strict root `task-create.md` scratch file for `/add-task`;
+- `pnpm brain:task:add`, `brain:task:list`, `brain:task:move`, `brain:task:checkin`, and `brain:task:checkout` perform deterministic task mutations for slash workflows;
 - shared behavior lives under `tools/brain/lib/` so tools reuse discovery, parsing, classification, calendar, task, and queue rules.
 
 ## Index classes

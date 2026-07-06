@@ -17,6 +17,7 @@ The v0.3 slice adds a Markdown-native daily planning loop while preserving the j
 
 - `journal/YYYY-MM-DD.md` files are chronological daily working memory with check-in, todo, notes, and checkout sections;
 - `backlog.md` is a protected root Markdown file and the queue of unresolved, uncommitted tasks;
+- `commands.md` is a protected root Markdown file and the maintained command reference for `package.json` scripts;
 - root Markdown files are standalone inbox captures unless they are protected root files;
 - `brain/` contains promoted durable wiki knowledge;
 - `brain:inbox` lists current root inbox notes and excludes protected root files, journals, and backlog;
@@ -25,7 +26,7 @@ The v0.3 slice adds a Markdown-native daily planning loop while preserving the j
 - `.claude/commands/add-task.md`, `.claude/commands/checkin.md`, and `.claude/commands/checkout.md` define the daily task workflows;
 - `brain:index` writes the local derived schema-v2 index at `data/brain-index.json`;
 - `brain:task:*` scripts perform deterministic task movement and reflection writes;
-- `brain:calendar` reads the optional local `.janus/calendar/primary.ics` export for planning.
+- `brain:calendar` live-fetches configured read-only iCalendar feeds, returns calendar-labeled events and merged busy planning blocks, and preserves legacy `.janus/calendar/primary.ics` fallback when no feed list is configured.
 
 ## TODO
 

@@ -11,7 +11,7 @@ Janus is a Markdown-first personal engineering knowledge system.
 - Root inbox notes are temporary and may be incomplete, incorrect, or unverified.
 - Source code and repository-local documentation remain authoritative for code behavior.
 - `.janus/digest-ledger.md` is local operational checklist state for `/digest`; it is not durable knowledge.
-- `.janus/calendar/` is local optional calendar input for `/checkin`; it is not durable knowledge.
+- `.janus/calendar/` is local optional calendar link config and input for `/checkin`; it is not durable knowledge.
 
 ## Source-of-truth hierarchy
 
@@ -28,6 +28,10 @@ Janus is a Markdown-first personal engineering knowledge system.
 3. Search both `brain/` and root inbox notes.
 4. Read original Markdown source files, not only search snippets.
 5. Verify code-specific claims in the relevant source repository.
+
+<important if="you are about to run any command declared in package.json">
+Read `commands.md` first. Use it as the local command contract for available scripts, variables, defaults, and required argument shapes before invoking the package command.
+</important>
 
 ## Capturing knowledge
 
