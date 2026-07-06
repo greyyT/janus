@@ -39,12 +39,14 @@ describe("backlog edits", () => {
     const result = addTaskToBacklog(EMPTY_BACKLOG, {
       title: "Write parser",
       added: "2026-06-30",
+      project: "janus",
       estimate: "medium",
       context: ["Keep unknown Markdown below the block."],
     });
 
     expect(result.task.id).toBe("J-003");
     expect(result.content).toContain("<!-- janus-backlog: next_task_id=4 -->");
+    expect(result.content).toContain("  - project: janus");
     expect(result.content).toContain("  - estimate: medium");
     expect(result.content).toContain("    - Keep unknown Markdown below the block.");
   });

@@ -32,6 +32,42 @@ export async function discoverMarkdownFiles(repositoryRoot: string): Promise<Dis
   return [...rootFiles, ...journalFiles, ...brainFiles];
 }
 
+export async function discoverProjectSlugs(repositoryRoot: string): Promise<string[]> {
+  const projectsPath = path.join(repositoryRoot, "brain", "projects");
+
+  try {
+    const stats = await lstat(projectsPath);
+    if (!stats.isDirectory() || stats.isSymbolicLink()) {
+      return [];
+    }
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return [];
+    }
+    throw error;
+  }
+
+  const entries = await readdir(projectsPath, { withFileTypes: true });
+  const slugs: string[] = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    const absolutePath = path.join(projectsPath, entry.name);
+    const stats = await lstat(absolutePath);
+
+    if (!stats.isDirectory() || stats.isSymbolicLink()) {
+      continue;
+    }
+
+    slugs.push(entry.name);
+  }
+
+  return slugs.sort();
+}
+
 export async function discoverJournalMarkdownFiles(repositoryRoot: string): Promise<DiscoveredMarkdownFile[]> {
   const journalPath = path.join(repositoryRoot, "journal");
 

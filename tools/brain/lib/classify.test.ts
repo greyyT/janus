@@ -12,6 +12,8 @@ describe("classifyPath", () => {
     ["docs/example.md", null],
     ["AGENTS.md", "protected_root"],
     ["backlog.md", "protected_root"],
+    ["commands.md", "protected_root"],
+    ["task-create.md", "protected_root"],
     ["agents.md", "inbox"],
     ["journal/2026-06-25.md", "journal"],
     ["journal/2024-02-29.md", "journal"],

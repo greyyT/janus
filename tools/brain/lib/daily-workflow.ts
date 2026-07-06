@@ -72,6 +72,34 @@ export interface MutationPreview {
 
 const TEMPLATE_RELATIVE_PATH = "templates/journal.md";
 
+const CHECKOUT_FREEFORM_SECTIONS = [
+  {
+    heading: "### What worked",
+    placeholder: "What helped you make progress today?",
+    example: "Example: A focused morning block made the checkout flow easier to reason about.",
+  },
+  {
+    heading: "### What could improve",
+    placeholder: "What caused friction or should change next time?",
+    example: "Example: The checkout questions still felt too generic before the journal draft existed.",
+  },
+  {
+    heading: "### Memorable moments",
+    placeholder: "What moments from today are worth remembering?",
+    example: "Example: A small conversation clarified what the workflow should feel like.",
+  },
+  {
+    heading: "### Grateful for",
+    placeholder: "What are you grateful for today?",
+    example: "Example: Enough uninterrupted time to finish one concrete improvement.",
+  },
+  {
+    heading: "### Achievements",
+    placeholder: "What did you accomplish today, including small wins?",
+    example: "Example: Shipped a safer checkout prompt and verified the focused path.",
+  },
+];
+
 export async function ensureJournal(repositoryRoot: string, date: CivilDate | string): Promise<{ path: string; created: boolean; content: string }> {
   const dateKey = typeof date === "string" ? date : formatCivilDate(date);
   if (parseCivilDate(dateKey) === null) {
@@ -287,11 +315,10 @@ function writeCheckinSection(content: string, plan: CheckinPlan): string {
 }
 
 function writeCheckoutSection(content: string, plan: CheckoutPlan): string {
+  const checkout = extractSection(content, "## Checkout");
   const lines = [
     "",
     `- wellbeing: ${plan.wellbeing ?? ""}`,
-    `- worked: ${plan.worked ?? ""}`,
-    `- improve: ${plan.improve ?? ""}`,
     `- handoff: ${plan.handoff ?? ""}`,
     `- next_step: ${plan.next_step ?? ""}`,
     "- task_decisions:",
@@ -299,7 +326,41 @@ function writeCheckoutSection(content: string, plan: CheckoutPlan): string {
   for (const id of plan.completed_task_ids ?? []) lines.push(`  - [${id}] completed`);
   lines.push("- digest:");
   for (const digestLine of plan.digest ?? []) lines.push(`  - ${digestLine}`);
+  lines.push("", ...buildCheckoutFreeformLines(checkout, plan));
   return replaceSection(content, "## Checkout", lines);
+}
+
+function buildCheckoutFreeformLines(checkout: string | null, plan: CheckoutPlan): string[] {
+  const existingSections = checkout === null ? new Map<string, string[]>() : extractCheckoutFreeformSections(checkout);
+  return CHECKOUT_FREEFORM_SECTIONS.flatMap((section) => {
+    const existing = existingSections.get(section.heading);
+    if (existing !== undefined) return [section.heading, ...existing, ""];
+    const plannedText = section.heading === "### What worked" ? plan.worked : section.heading === "### What could improve" ? plan.improve : undefined;
+    return renderCheckoutFreeformSection(section, plannedText);
+  });
+}
+
+function extractCheckoutFreeformSections(checkout: string): Map<string, string[]> {
+  const lines = splitLines(checkout);
+  const sections = new Map<string, string[]>();
+  for (const section of CHECKOUT_FREEFORM_SECTIONS) {
+    const start = lines.findIndex((line) => line.trim() === section.heading);
+    if (start === -1) continue;
+    const end = lines.findIndex((line, index) => index > start && /^###\s+/u.test(line));
+    sections.set(section.heading, trimTrailingLines(lines.slice(start + 1, end === -1 ? lines.length : end)));
+  }
+  return sections;
+}
+
+function renderCheckoutFreeformSection(section: (typeof CHECKOUT_FREEFORM_SECTIONS)[number], plannedText: string | undefined): string[] {
+  if (plannedText !== undefined && plannedText.length > 0) return [section.heading, "", ...plannedText.split("\n"), ""];
+  return [section.heading, "", `> ${section.placeholder}`, `> ${section.example}`, ""];
+}
+
+function trimTrailingLines(lines: string[]): string[] {
+  const trimmed = [...lines];
+  while (trimmed.length > 0 && trimmed.at(-1) === "") trimmed.pop();
+  return trimmed;
 }
 
 function appendCheckoutAudit(content: string, line: string): string {

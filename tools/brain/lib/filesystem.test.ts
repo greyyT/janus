@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
-import { discoverMarkdownFiles, resolveRepositoryRoot, toPosixRelativePath } from "./filesystem.js";
+import { discoverMarkdownFiles, discoverProjectSlugs, resolveRepositoryRoot, toPosixRelativePath } from "./filesystem.js";
 
 async function createFixture(): Promise<string> {
   const root = await mkdtemp(path.join(os.tmpdir(), "janus-fs-"));
@@ -76,6 +76,17 @@ describe("discoverMarkdownFiles", () => {
 
     expect(files.map((file) => file.relativePath)).not.toContain("linked.md");
     expect(files.map((file) => file.relativePath)).not.toContain("journal/linked.md");
+  });
+});
+
+describe("discoverProjectSlugs", () => {
+  test("returns direct project directory names in sorted order", async () => {
+    const root = await createFixture();
+    await mkdir(path.join(root, "brain", "projects", "janus"), { recursive: true });
+    await mkdir(path.join(root, "brain", "projects", "ronin"), { recursive: true });
+    await writeFile(path.join(root, "brain", "projects", "README.md"), "# Docs", "utf8");
+
+    await expect(discoverProjectSlugs(root)).resolves.toEqual(["janus", "ronin"]);
   });
 });
 

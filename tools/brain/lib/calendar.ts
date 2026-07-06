@@ -1,9 +1,16 @@
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
+import { writeJsonAtomically } from "./filesystem.js";
 
 export interface CalendarConfig {
   timezone?: string;
   planning_hours?: { start: string; end: string };
+  calendars?: CalendarSourceConfig[];
+}
+
+export interface CalendarSourceConfig {
+  name: string;
+  url: string;
 }
 
 export interface CalendarEventOccurrence {
@@ -12,6 +19,7 @@ export interface CalendarEventOccurrence {
   start: string;
   end: string;
   all_day: boolean;
+  calendar?: string;
 }
 
 export interface BusyInterval {
@@ -25,8 +33,8 @@ export interface CalendarDayAvailability {
   timezone: string;
   events: CalendarEventOccurrence[];
   busy: BusyInterval[];
-  free: BusyInterval[];
   message?: string;
+  warnings?: string[];
 }
 
 interface RawEvent {
@@ -44,6 +52,21 @@ interface IcsDate {
   allDay: boolean;
 }
 
+export interface AddCalendarSubscriptionOptions {
+  url: string;
+  name?: string;
+  timezone?: string;
+}
+
+export interface AddCalendarSubscriptionResult {
+  action: "added_calendar" | "calendar_already_configured";
+  config_path: ".janus/calendar/config.json";
+  calendar: CalendarSourceConfig;
+  calendar_count: number;
+}
+
+export type CalendarIcsFetcher = (url: string) => Promise<string>;
+
 const DEFAULT_TIMEZONE = "UTC";
 const DEFAULT_PLANNING_HOURS = { start: "09:00", end: "22:00" };
 
@@ -51,31 +74,71 @@ export async function loadCalendarDay(repositoryRoot: string, date: string): Pro
   const calendarRoot = path.join(repositoryRoot, ".janus", "calendar");
   const icsPath = path.join(calendarRoot, "primary.ics");
   const configPath = path.join(calendarRoot, "config.json");
-  const hasIcs = await pathExists(icsPath);
   const hasConfig = await pathExists(configPath);
-  if (!hasIcs || !hasConfig) {
+  if (!hasConfig) {
     return {
       status: "unavailable",
       date,
       timezone: DEFAULT_TIMEZONE,
       events: [],
       busy: [],
-      free: [],
-      message: "No local calendar export found at .janus/calendar/primary.ics and .janus/calendar/config.json.",
+      message: "No calendar config found at .janus/calendar/config.json.",
     };
   }
 
   const config = JSON.parse(await readFile(configPath, "utf8")) as CalendarConfig;
   const timezone = config.timezone ?? DEFAULT_TIMEZONE;
-  const planningHours = config.planning_hours ?? DEFAULT_PLANNING_HOURS;
-  const events = parseIcsEvents(await readFile(icsPath, "utf8"), timezone);
-  const dayStart = zonedTimeToUtc(date, "00:00", timezone);
-  const dayEnd = zonedTimeToUtc(date, "23:59", timezone);
-  const occurrences = events.flatMap((event) => expandEventForDate(event, dayStart, dayEnd));
-  const busy = mergeIntervals(occurrences.map((event) => ({ start: event.start, end: event.end })));
-  const free = calculateFreeBlocks(date, planningHours.start, planningHours.end, busy, timezone);
 
-  return { status: "available", date, timezone, events: occurrences, busy, free };
+  if (config.calendars !== undefined && config.calendars.length > 0) {
+    const results = await Promise.allSettled(config.calendars.map(async (calendar) => {
+      const url = normalizeCalendarUrl(calendar.url);
+      const content = await fetchCalendarIcs(url);
+      const events = parseIcsEvents(content, timezone);
+      return { calendar: { name: calendar.name, url }, events };
+    }));
+    const warnings: string[] = [];
+    const occurrences = results.flatMap((result, index) => {
+      const calendar = config.calendars?.[index];
+      if (result.status === "rejected") {
+        warnings.push(`Calendar "${calendar?.name ?? "unknown"}" unavailable: ${errorMessage(result.reason)}`);
+        return [];
+      }
+      return occurrencesForDate(result.value.events, date, timezone).map((event) => ({ ...event, calendar: result.value.calendar.name }));
+    }).sort(compareOccurrences);
+
+    if (results.every((result) => result.status === "rejected")) {
+      return {
+        status: "unavailable",
+        date,
+        timezone,
+        events: [],
+        busy: [],
+        message: "No configured calendars could be loaded.",
+        warnings,
+      };
+    }
+
+    const busy = mergeIntervals(occurrences.map((event) => ({ start: event.start, end: event.end })));
+    return { status: "available", date, timezone, events: localizeOccurrences(occurrences, timezone), busy: localizeIntervals(busy, timezone), warnings: warnings.length > 0 ? warnings : undefined };
+  }
+
+  const hasIcs = await pathExists(icsPath);
+  if (!hasIcs) {
+    return {
+      status: "unavailable",
+      date,
+      timezone,
+      events: [],
+      busy: [],
+      message: "No local calendar export found at .janus/calendar/primary.ics.",
+    };
+  }
+
+  const events = parseIcsEvents(await readFile(icsPath, "utf8"), timezone);
+  const occurrences = occurrencesForDate(events, date, timezone).map((event) => ({ ...event, calendar: "primary" }));
+  const busy = mergeIntervals(occurrences.map((event) => ({ start: event.start, end: event.end })));
+
+  return { status: "available", date, timezone, events: localizeOccurrences(occurrences, timezone), busy: localizeIntervals(busy, timezone) };
 }
 
 export function formatCalendarHuman(day: CalendarDayAvailability): string {
@@ -83,9 +146,10 @@ export function formatCalendarHuman(day: CalendarDayAvailability): string {
   const lines = [`Calendar ${day.date} (${day.timezone})`, "Busy:"];
   if (day.busy.length === 0) lines.push("- none");
   for (const interval of day.busy) lines.push(`- ${formatTime(interval.start)}-${formatTime(interval.end)}`);
-  lines.push("Free:");
-  if (day.free.length === 0) lines.push("- none");
-  for (const interval of day.free) lines.push(`- ${formatTime(interval.start)}-${formatTime(interval.end)}`);
+  if (day.warnings?.length) {
+    lines.push("Warnings:");
+    for (const warning of day.warnings) lines.push(`- ${warning}`);
+  }
   return lines.join("\n");
 }
 
@@ -126,22 +190,137 @@ export function mergeIntervals(intervals: BusyInterval[]): BusyInterval[] {
   return merged;
 }
 
-export function calculateFreeBlocks(date: string, startTime: string, endTime: string, busy: BusyInterval[], timezone = DEFAULT_TIMEZONE): BusyInterval[] {
-  const start = zonedTimeToUtc(date, startTime, timezone).toISOString();
-  const end = zonedTimeToUtc(date, endTime, timezone).toISOString();
-  let cursor = start;
-  const free: BusyInterval[] = [];
 
-  for (const interval of busy) {
-    const clippedStart = interval.start < start ? start : interval.start;
-    const clippedEnd = interval.end > end ? end : interval.end;
-    if (clippedEnd <= start || clippedStart >= end) continue;
-    if (cursor < clippedStart) free.push({ start: cursor, end: clippedStart });
-    if (cursor < clippedEnd) cursor = clippedEnd;
+export function normalizeCalendarUrl(rawUrl: string): string {
+  const trimmed = rawUrl.trim();
+  const normalized = trimmed.startsWith("webcal://") ? `https://${trimmed.slice("webcal://".length)}` : trimmed;
+
+  try {
+    const url = new URL(normalized);
+    if (url.protocol !== "https:") throw new Error();
+    return url.toString();
+  } catch {
+    throw new Error("calendar URL must be an https:// or webcal:// iCalendar feed");
+  }
+}
+
+export function validateCalendarIcsContent(content: string): void {
+  if (!content.includes("BEGIN:VCALENDAR") || !content.includes("END:VCALENDAR")) {
+    throw new Error("calendar URL did not return iCalendar data; use Google Calendar's Secret address in iCal format");
+  }
+}
+
+export async function fetchCalendarIcs(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`failed to fetch calendar "${url}": HTTP ${response.status}`);
+  const content = await response.text();
+  validateCalendarIcsContent(content);
+  return content;
+}
+
+export async function addCalendarSubscription(
+  repositoryRoot: string,
+  options: AddCalendarSubscriptionOptions,
+  fetcher: CalendarIcsFetcher = fetchCalendarIcs,
+): Promise<AddCalendarSubscriptionResult> {
+  const normalizedUrl = normalizeCalendarUrl(options.url);
+  const content = await fetcher(normalizedUrl);
+  validateCalendarIcsContent(content);
+
+  const configPath = path.join(repositoryRoot, ".janus", "calendar", "config.json");
+  const hasConfig = await pathExists(configPath);
+  const config = hasConfig
+    ? JSON.parse(await readFile(configPath, "utf8")) as CalendarConfig
+    : {
+      timezone: new Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+      planning_hours: DEFAULT_PLANNING_HOURS,
+      calendars: [],
+    };
+  const calendars = config.calendars ?? [];
+  const duplicateUrl = calendars.find((calendar) => normalizeCalendarUrl(calendar.url) === normalizedUrl);
+  if (duplicateUrl !== undefined) {
+    return {
+      action: "calendar_already_configured",
+      config_path: ".janus/calendar/config.json",
+      calendar: duplicateUrl,
+      calendar_count: calendars.length,
+    };
   }
 
-  if (cursor < end) free.push({ start: cursor, end });
-  return free;
+  const name = options.name ?? nextCalendarName(calendars);
+  if (calendars.some((calendar) => calendar.name.toLocaleLowerCase() === name.toLocaleLowerCase())) {
+    throw new Error(`calendar name "${name}" is already configured`);
+  }
+
+  const calendar = { name, url: normalizedUrl };
+  const nextConfig: CalendarConfig = {
+    ...config,
+    timezone: options.timezone ?? config.timezone ?? (new Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"),
+    planning_hours: config.planning_hours ?? DEFAULT_PLANNING_HOURS,
+    calendars: [...calendars, calendar],
+  };
+  await writeJsonAtomically(configPath, nextConfig);
+
+  return {
+    action: "added_calendar",
+    config_path: ".janus/calendar/config.json",
+    calendar,
+    calendar_count: nextConfig.calendars?.length ?? 0,
+  };
+}
+
+function localizeOccurrences(events: CalendarEventOccurrence[], timezone: string): CalendarEventOccurrence[] {
+  return events.map((event) => ({
+    ...event,
+    start: formatDateTimeInTimezone(event.start, timezone),
+    end: formatDateTimeInTimezone(event.end, timezone),
+  }));
+}
+
+function localizeIntervals(intervals: BusyInterval[], timezone: string): BusyInterval[] {
+  return intervals.map((interval) => ({
+    start: formatDateTimeInTimezone(interval.start, timezone),
+    end: formatDateTimeInTimezone(interval.end, timezone),
+  }));
+}
+
+function formatDateTimeInTimezone(value: string, timezone: string): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(value));
+  const values = new Map(parts.map((part) => [part.type, part.value]));
+  return `${values.get("year")}-${values.get("month")}-${values.get("day")}T${values.get("hour")}:${values.get("minute")}:${values.get("second")}`;
+}
+
+function occurrencesForDate(events: RawEvent[], date: string, timezone: string): CalendarEventOccurrence[] {
+  const dayStart = zonedTimeToUtc(date, "00:00", timezone);
+  const dayEnd = zonedTimeToUtc(date, "23:59", timezone);
+  return events.flatMap((event) => expandEventForDate(event, dayStart, dayEnd));
+}
+
+function compareOccurrences(a: CalendarEventOccurrence, b: CalendarEventOccurrence): number {
+  return a.start.localeCompare(b.start)
+    || a.end.localeCompare(b.end)
+    || (a.calendar ?? "").localeCompare(b.calendar ?? "")
+    || a.uid.localeCompare(b.uid);
+}
+
+function nextCalendarName(calendars: CalendarSourceConfig[]): string {
+  const names = new Set(calendars.map((calendar) => calendar.name.toLocaleLowerCase()));
+  let index = 1;
+  while (names.has(`calendar ${index}`)) index += 1;
+  return `Calendar ${index}`;
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 function expandEventForDate(event: RawEvent, dayStart: Date, dayEnd: Date): CalendarEventOccurrence[] {

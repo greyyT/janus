@@ -28,6 +28,7 @@ export interface ParsedBacklog {
 export interface TaskInput {
   title: string;
   added?: string;
+  project?: string;
   estimate?: TaskEstimate;
   deadline?: string;
   blockedBy?: string;
@@ -125,6 +126,7 @@ export function formatTaskBlock(id: string, input: TaskInput): string[] {
 
   const lines = [`- [ ] [${id}] ${title}`];
   if (input.added !== undefined && input.added.length > 0) lines.push(`  - added: ${input.added}`);
+  if (input.project !== undefined) lines.push(`  - project: ${input.project}`);
   if (input.estimate !== undefined) lines.push(`  - estimate: ${input.estimate}`);
   if (input.deadline !== undefined) lines.push(`  - deadline: ${input.deadline}`);
   if (input.blockedBy !== undefined) lines.push(`  - blocked_by: ${input.blockedBy}`);

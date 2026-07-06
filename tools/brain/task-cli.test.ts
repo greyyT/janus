@@ -6,10 +6,12 @@ import { promisify } from "node:util";
 import { describe, expect, test } from "vitest";
 
 const execFileAsync = promisify(execFile);
-const TSX = path.resolve("node_modules/.bin/tsx");
+const NODE = process.execPath;
+const TSX_IMPORT = path.resolve("node_modules/tsx/dist/loader.mjs");
 const ADD = path.resolve("tools/brain/task-add.ts");
 const LIST = path.resolve("tools/brain/task-list.ts");
 const MOVE = path.resolve("tools/brain/task-move.ts");
+const PENDING = path.resolve("tools/brain/task-pending.ts");
 
 async function createFixture(): Promise<string> {
   const root = await mkdtemp(path.join(os.tmpdir(), "janus-task-cli-"));
@@ -17,6 +19,7 @@ async function createFixture(): Promise<string> {
   await writeFile(path.join(root, "AGENTS.md"), "# Agents", "utf8");
   await mkdir(path.join(root, "templates"), { recursive: true });
   await mkdir(path.join(root, "journal"), { recursive: true });
+  await mkdir(path.join(root, "brain", "projects", "janus"), { recursive: true });
   await writeFile(path.join(root, "templates", "journal.md"), "# {{date:YYYY-MM-DD}}\n\n## Check-in\n\n## Todo\n\n- [ ]\n\n## Notes\n\n## Checkout\n\n- task_decisions:\n", "utf8");
   await writeFile(path.join(root, "backlog.md"), "# Backlog\n\n<!-- janus-backlog: next_task_id=2 -->\n\n- [ ] [J-001] Existing\n", "utf8");
   await writeFile(path.join(root, "journal", "2026-06-30.md"), "# 2026-06-30\n\n## Check-in\n\n## Todo\n\n- [ ]\n\n## Notes\n\n## Checkout\n", "utf8");
@@ -43,6 +46,44 @@ describe("task CLIs", () => {
     expect(await readFile(path.join(root, "backlog.md"), "utf8")).toBe(before);
   });
 
+  test("task:pending creates task-create.md and task:add --form consumes it", async () => {
+    const root = await createFixture();
+
+    const pendingResult = await run(root, PENDING, ["--json"]);
+    expect(JSON.parse(pendingResult.stdout)).toMatchObject({
+      action: "created_task_pending",
+      path: "task-create.md",
+      project_slugs: ["janus"],
+    });
+
+    await writeFile(path.join(root, "task-create.md"), `---
+title: Improve add task flow
+project: Janus
+estimate: medium
+deadline:
+blocked_by:
+---
+
+## Context
+
+- Faster than chat
+
+## References
+
+- journal/2026-07-01.md
+`, "utf8");
+
+    const addResult = await run(root, ADD, ["--form", "task-create.md", "--json"]);
+    expect(JSON.parse(addResult.stdout)).toMatchObject({
+      action: "added_task",
+      task: { id: "J-002", title: "Improve add task flow" },
+      changed_paths: ["backlog.md", "task-create.md"],
+    });
+    expect(await readFile(path.join(root, "backlog.md"), "utf8")).toContain("  - added: ");
+    expect(await readFile(path.join(root, "backlog.md"), "utf8")).toContain("  - project: janus");
+    await expect(readFile(path.join(root, "task-create.md"), "utf8")).rejects.toThrow();
+  });
+
   test("task:move dry-run previews source and destination without mutating", async () => {
     const root = await createFixture();
     const before = await readFile(path.join(root, "backlog.md"), "utf8");
@@ -59,6 +100,6 @@ describe("task CLIs", () => {
 });
 
 async function run(cwd: string, script: string, args: string[]): Promise<{ stdout: string; stderr: string }> {
-  const result = await execFileAsync(TSX, [script, ...args], { cwd });
+  const result = await execFileAsync(NODE, ["--import", TSX_IMPORT, script, ...args], { cwd });
   return { stdout: result.stdout.trimEnd(), stderr: result.stderr.trimEnd() };
 }

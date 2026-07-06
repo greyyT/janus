@@ -9,3 +9,4 @@ export * from "./filesystem.js";
 export * from "./frontmatter.js";
 export * from "./journal.js";
 export * from "./output.js";
+export * from "./task-form.js";

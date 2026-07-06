@@ -10,7 +10,7 @@ async function createFixture(): Promise<string> {
   await writeFile(path.join(root, "AGENTS.md"), "# Agents", "utf8");
   await mkdir(path.join(root, "templates"), { recursive: true });
   await mkdir(path.join(root, "journal"), { recursive: true });
-  await writeFile(path.join(root, "templates", "journal.md"), "# {{date:YYYY-MM-DD}}\n\n## Check-in\n\n- capacity:\n- primary_outcome:\n- calendar_summary:\n- constraints:\n\n## Todo\n\n- [ ]\n\n## Notes\n\n## Checkout\n\n- wellbeing:\n- worked:\n- improve:\n- handoff:\n- next_step:\n- task_decisions:\n- digest:\n", "utf8");
+  await writeFile(path.join(root, "templates", "journal.md"), "# {{date:YYYY-MM-DD}}\n\n## Check-in\n\n- capacity:\n- primary_outcome:\n- calendar_summary:\n- constraints:\n\n## Todo\n\n- [ ]\n\n## Notes\n\n## Checkout\n\n- wellbeing:\n- handoff:\n- next_step:\n- task_decisions:\n- digest:\n\n### What worked\n\n> What helped you make progress today?\n> Example: A focused morning block made the checkout flow easier to reason about.\n\n### What could improve\n\n> What caused friction or should change next time?\n> Example: The checkout questions still felt too generic before the journal draft existed.\n\n### Memorable moments\n\n> What moments from today are worth remembering?\n> Example: A small conversation clarified what the workflow should feel like.\n\n### Grateful for\n\n> What are you grateful for today?\n> Example: Enough uninterrupted time to finish one concrete improvement.\n\n### Achievements\n\n> What did you accomplish today, including small wins?\n> Example: Shipped a safer checkout prompt and verified the focused path.\n", "utf8");
   await writeFile(path.join(root, "backlog.md"), "# Backlog\n\n<!-- janus-backlog: next_task_id=3 -->\n\n- [ ] [J-001] Backlog task\n  - estimate: quick\n\n- [ ] [J-002] Other task\n", "utf8");
   return root;
 }
@@ -24,8 +24,17 @@ describe("ensureJournal", () => {
     expect(journal.path).toBe("journal/2026-06-30.md");
     expect(await readFile(path.join(root, journal.path), "utf8")).toContain("# 2026-06-30");
   });
-});
 
+  test("opens an existing journal without rewriting it", async () => {
+    const root = await createFixture();
+    await writeFile(path.join(root, "journal", "2026-06-30.md"), "# Existing\n", "utf8");
+
+    const journal = await ensureJournal(root, "2026-06-30");
+
+    expect(journal).toEqual({ path: "journal/2026-06-30.md", created: false, content: "# Existing\n" });
+    expect(await readFile(path.join(root, journal.path), "utf8")).toBe("# Existing\n");
+  });
+});
 describe("applyCheckinPlan", () => {
   test("dry-run previews without mutating backlog or journal", async () => {
     const root = await createFixture();
@@ -75,7 +84,7 @@ describe("applyCheckinPlan", () => {
 describe("applyCheckoutPlan", () => {
   test("marks completed tasks and writes checkout reflection", async () => {
     const root = await createFixture();
-    await writeFile(path.join(root, "journal", "2026-06-30.md"), "# 2026-06-30\n\n## Check-in\n\n## Todo\n\n- [ ] [J-001] Task\n\n## Notes\n\n## Checkout\n\n- wellbeing:\n- worked:\n- improve:\n- handoff:\n- next_step:\n- task_decisions:\n- digest:\n", "utf8");
+    await writeFile(path.join(root, "journal", "2026-06-30.md"), "# 2026-06-30\n\n## Check-in\n\n## Todo\n\n- [ ] [J-001] Task\n\n## Notes\n\n## Checkout\n\n- wellbeing:\n- handoff:\n- next_step:\n- task_decisions:\n- digest:\n\n### What worked\n\nFocused block helped\n\n### What could improve\n\nStart earlier\n\n### Memorable moments\n\nPairing clarified the flow\n\n### Grateful for\n\nA quiet afternoon\n\n### Achievements\n\nCompleted the checkout change\n", "utf8");
 
     await applyCheckoutPlan(root, {
       date: "2026-06-30",
@@ -93,5 +102,7 @@ describe("applyCheckoutPlan", () => {
     expect(journal).toContain("- wellbeing: 4");
     expect(journal).toContain("  - [J-001] completed");
     expect(journal).toContain("  - journal_only: kept temporal notes here");
+    expect(journal).toContain("### What worked\n\nFocused block helped");
+    expect(journal).toContain("### Achievements\n\nCompleted the checkout change");
   });
 });
