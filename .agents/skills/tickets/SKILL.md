@@ -80,13 +80,12 @@ Trigger: the user describes work that should survive the conversation.
 
 1. Classify first:
    - time-specific obligation → calendar;
-   - lightweight action or reminder → `backlog.md`;
-   - unclear idea or project-sized possibility → un-IDed board inbox item with `captured`, context, and `clarify_next`;
+   - unclear idea, lightweight action, or project-sized possibility → un-IDed board inbox item with `captured`, context, and `clarify_next`;
    - coherent ticket → continue.
 2. Do not force project-sized work into one ticket. Ask at most one qualification question, preferably: "What observable result should exist after one to four sessions?"
-3. Search the board, ticket files, relevant project material, and `backlog.md` for overlap. Extend an existing ticket instead of duplicating it.
+3. Search the board, ticket files, and relevant project material for overlap. Extend an existing ticket instead of duplicating it.
 4. Preview the contract when Janus inferred material parts of it; write directly when the user supplied it.
-5. Allocate the ID immediately before writing: read `janus-backlog: next_task_id=N` in `backlog.md`, check `backlog.md`, journals, and `tickets/` for collisions, take the first unused number at or above `N` (three digits), and advance `next_task_id` in the same changeset. Never reuse an ID. Stop rather than overwrite an existing path.
+5. Allocate the ID immediately before writing: scan `tickets/` and `tickets/BOARD.md` for the highest existing `J-NNN`, and take the next number, padded to three digits. Never reuse an ID. Stop rather than overwrite an existing path.
 6. Write the ticket file with a dated creation work-log entry, and add it under `## Ready` or `## Waiting` on the board. Capture never creates an `active` ticket and never adds to today's dispatch unless the user asks.
 
 ### Start

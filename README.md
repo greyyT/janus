@@ -14,7 +14,7 @@ Janus keeps four kinds of Markdown memory separate.
 
 `journal/` is daily working memory. It holds dated notes like `journal/2026-06-25.md`, with morning check-in context, committed task blocks, loose notes, links, and checkout reflections including wellbeing.
 
-`backlog.md` is the protected root queue of unresolved, uncommitted tasks. Tasks move from backlog into a day's journal only when `/checkin` commits them.
+Managed work lives in `tickets/`. See `docs/ticket.md`.
 
 Root Markdown files are inbox captures. These are standalone thoughts that deserve their own title, source context, or likely promotion path. They can be incomplete or wrong. They are allowed to be messy.
 
@@ -44,7 +44,7 @@ Janus is currently at v0.3.
 It supports:
 
 - root inbox notes;
-- protected `backlog.md` task capture with stable `J-###` IDs;
+- tickets in `tickets/` with stable `J-###` IDs;
 - daily journal notes in `journal/YYYY-MM-DD.md`;
 - an Obsidian journal template at `templates/journal.md`;
 - optional read-only Google/iCalendar feed planning configured in `.janus/calendar/config.json`;
@@ -56,7 +56,6 @@ It supports:
 janus/
 ├── AGENTS.md
 ├── README.md
-├── backlog.md
 ├── journal/
 │   ├── .gitkeep
 │   └── YYYY-MM-DD.md
@@ -80,10 +79,9 @@ janus/
 
 ## daily workflow
 
-Capture future work with `/add-task`. It appends a task block to `backlog.md` and allocates the next stable task ID.
-The default flow creates a strict root `task-create.md` scratch file, waits for the user to fill it and reply `done`, then creates the backlog task directly and deletes the scratch file on success.
+Capture work as tickets; see `docs/ticket.md`.
 
-Start the day with `/checkin`. It creates today's journal note if missing, reconciles unfinished tasks from the latest prior journal, reads backlog and optional calendar context, asks for missing judgment, and commits selected task blocks into today's `## Todo`.
+Start the day with `/checkin`. It creates today's journal note if missing, reconciles unfinished tasks from the latest prior journal, reads the ticket board and optional calendar context, asks for missing judgment, and commits selected task blocks into today's `## Todo`.
 
 During the day, use:
 

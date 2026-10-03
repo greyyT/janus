@@ -14,11 +14,11 @@ The ticket system began as an experiment, proposed in a conversation with ChatGP
 - **Decisions stay traceable.** The work log keeps what changed and why, without cluttering the current state.
 - **Work-in-progress stays bounded.** Limits on ready and active tickets keep the queue honest about capacity.
 
-The backlog still exists for lightweight actions that need no continuity. Tickets are for work that does.
+The backlog has since been retired. Fixed-time actions go to the calendar; everything else that needs to survive the conversation becomes a ticket or an item in the board inbox.
 
 ## What a ticket is
 
-A ticket is one deliverable, decision, investigation result, or verification result, normally finishable in one to four focused sessions. Anything larger belongs to a project and should be split; anything smaller belongs in the backlog or calendar.
+A ticket is one deliverable, decision, investigation result, or verification result, normally finishable in one to four focused sessions. Anything larger belongs to a project and should be split; anything smaller belongs in the board inbox or the calendar.
 
 ## Files
 
@@ -63,7 +63,7 @@ The checkpoint is replaced on each update; history goes to the work log. A ticke
 
 Janus recognizes each phase from the conversation; there are no commands to remember.
 
-1. **Capture.** New work is classified first (calendar, backlog, idea inbox, or ticket), checked for overlap, and written as `ready` or `waiting`. Capture never starts work.
+1. **Capture.** New work is classified first (calendar, board inbox, or ticket), checked for overlap, and written as `ready` or `waiting`. Capture never starts work.
 2. **Start.** The ticket moves to `active` and Janus gives a short briefing: what matters now, relevant prior decisions, and the exact first action.
 3. **Checkpoint.** When a session ends, a result or blocker appears, or work switches elsewhere, Janus records what changed, the next move, and the resulting state.
 4. **Replan.** When urgency or discovery displaces planned work, Janus records what was displaced, why, the replacement, a cap, and the return point.
