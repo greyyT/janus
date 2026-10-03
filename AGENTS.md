@@ -1,6 +1,6 @@
 # Janus
 
-Janus is a Markdown-first personal engineering knowledge system.
+Janus is a Markdown-first knowledge system and personal operating system.
 
 ## Knowledge locations
 

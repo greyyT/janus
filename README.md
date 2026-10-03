@@ -48,7 +48,6 @@ It supports:
 - daily journal notes in `journal/YYYY-MM-DD.md`;
 - an Obsidian journal template at `templates/journal.md`;
 - optional read-only Google/iCalendar feed planning configured in `.janus/calendar/config.json`;
-- durable Janus project docs under `brain/projects/janus/`;
 - tests for the brain tooling.
 
 ## repository map
