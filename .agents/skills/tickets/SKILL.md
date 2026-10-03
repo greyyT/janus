@@ -123,7 +123,7 @@ When the trigger is implicit, propose the checkpoint in one or two lines rather 
    - move the board entry without duplicating it;
    - append a one-line title-and-ID reference under `### Ticket sessions` in today's journal.
 3. For a no-progress session, record the blocker or reason and a trustworthy next move. No achievement language.
-4. When the checkpoint reveals an architectural constraint, invalid assumption, new risk, milestone progress, or direction change, flag that the project page may need updating.
+4. When the ticket names a project, propagate to it through the projects skill: if the checkpoint revealed an architectural constraint, new dependency, invalid assumption, milestone progress, new risk, decision, or direction change, update the project page. Routine progress does not touch the project.
 
 ### Replan
 
