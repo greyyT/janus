@@ -60,3 +60,7 @@ function isValidCivilDate(year: number, month: number, day: number): boolean {
     && date.getUTCMonth() === month - 1
     && date.getUTCDate() === day;
 }
+
+export function todayDateKey(): string {
+  return formatCivilDate(todayLocalCivilDate());
+}
