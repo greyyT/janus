@@ -51,7 +51,7 @@ assert.deepEqual(success.calls[0], ["pane", "split", "--pane", "test:source", "-
 const record = JSON.parse(success.stdout);
 assert.match(record.destinationName, /^[a-z][a-z0-9_-]{0,31}$/);
 assert.equal(record.sessionName, "Review ticket handoff");
-assert.deepEqual(success.calls[1], ["agent", "start", record.destinationName, "--kind", "omp", "--pane", "test:destination"]);
+assert.deepEqual(success.calls[1], ["agent", "start", record.destinationName, "--kind", "pi", "--pane", "test:destination", "--", "--name", "Review ticket handoff"]);
 assert.equal(success.calls[2].length, 4);
 assert.ok(success.calls[2][3].includes(record.packetPath));
 assert.notEqual(record.packetPath, packet);

@@ -63,8 +63,8 @@ if (typeof context.destinationPaneId !== "string" || !context.destinationPaneId.
 }
 
 await setTimeout(2_000);
-runHerdr("start", ["agent", "start", context.destinationName, "--kind", "omp", "--pane", context.destinationPaneId]);
-const prompt = `Continue the work transferred from another coordinator omp session.
+runHerdr("start", ["agent", "start", context.destinationName, "--kind", "pi", "--pane", context.destinationPaneId, "--", "--name", sessionName]);
+const prompt = `Continue the work transferred from another coordinator pi session.
 
 Read the handoff packet at this absolute path: ${JSON.stringify(context.packetPath)}.
 Treat your fresh context window as an asset: do not reconstruct the source conversation or preload broad project context. Initially read only the files inside <read-files>; load other referenced artifacts when the work requires them.

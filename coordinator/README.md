@@ -1,8 +1,13 @@
 # Coordinator
 
-The Janus coordinator: an omp (oh-my-pi) agent that plans, delegates, and reviews repository work through worker agents running in Herdr panes. omp lets each role use a different LLM provider.
+The Janus coordinator: a pi agent that plans, delegates, and reviews repository work through worker agents running in Herdr panes.
 
-Run omp from this directory so it discovers the coordinator skills in `.agents/skills/`.
+Run `pi` from this directory. The project harness keeps it minimal:
+
+- `.pi/settings.json` enables six built-in tools (`read`, `grep`, `find`, `write`, `edit`, `bash`) and turns off pi's built-in MCP, codemode, tool-search, and llama.cpp extensions.
+- `.pi/extensions/harness` keeps only those six tools active and blocks calls to any other tool, including tools registered by other extensions. It also lists only skills from this repository in the system prompt, so user-level skills stay out. Pi has no sub-agent tool; the coordinator spawns agents through `herdr-delegation`.
+
+Pi loads project files after you trust the project on first run.
 
 ## Skills
 
@@ -15,7 +20,7 @@ Run omp from this directory so it discovers the coordinator skills in `.agents/s
 
 ## Requirements
 
-- `omp` and `herdr` on `PATH`; the coordinator must run inside a Herdr pane.
+- `pi` and `herdr` on `PATH`; the coordinator must run inside a Herdr pane.
 
 ## Tests
 
