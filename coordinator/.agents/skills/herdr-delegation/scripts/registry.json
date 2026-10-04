@@ -1,0 +1,91 @@
+{
+  "_comment": "Fixed variant -> Herdr startup profile mapping for spawn-agent. kind is herdr --kind; model/effort null omits the flag; args are forwarded verbatim after --. role selects the fixed first-turn role prompt in prompts/<role>.md. code is a short slug used to build the generated agent name.",
+  "implementation-worker": {
+    "kind": "omp",
+    "model": "sonnet-5-5",
+    "effort": null,
+    "args": ["--thinking=medium"],
+    "role": "worker",
+    "code": "iw"
+  },
+  "pr-resolver": {
+    "kind": "omp",
+    "model": "opus",
+    "effort": null,
+    "args": ["--thinking=medium"],
+    "role": "pr-resolver",
+    "code": "prv"
+  },
+  "research": {
+    "kind": "omp",
+    "model": "sonnet-5-5",
+    "effort": null,
+    "args": ["--thinking=low"],
+    "role": "research",
+    "code": "res"
+  },
+  "task-researcher": {
+    "kind": "claude",
+    "model": "sonnet",
+    "effort": "medium",
+    "args": ["--dangerously-skip-permissions"],
+    "role": "task-researcher",
+    "code": "taskr"
+  },
+  "planner": {
+    "kind": "omp",
+    "model": "fable",
+    "effort": null,
+    "args": ["--thinking=high"],
+    "role": "planner",
+    "code": "plan"
+  },
+  "plan-reviewer": {
+    "kind": "claude",
+    "model": "fable",
+    "effort": "high",
+    "args": ["--dangerously-skip-permissions"],
+    "role": "plan-reviewer",
+    "code": "planrv"
+  },
+  "reviewer-minimal": {
+    "kind": "omp",
+    "model": "kiro/gpt-5.6-sol",
+    "effort": null,
+    "args": ["--thinking=low"],
+    "role": "reviewer",
+    "code": "rvmin"
+  },
+  "reviewer-medium": {
+    "kind": "omp",
+    "model": "kiro/gpt-5.6-sol",
+    "effort": null,
+    "args": ["--thinking=medium"],
+    "role": "reviewer",
+    "code": "rvmed"
+  },
+  "reviewer-high": {
+    "kind": "omp",
+    "model": "kiro/gpt-5.6-sol",
+    "effort": null,
+    "args": ["--thinking=high"],
+    "role": "reviewer",
+    "code": "rvhi"
+  },
+  "integration-reviewer": {
+    "kind": "omp",
+    "model": "fable",
+    "effort": null,
+    "args": ["--thinking=high"],
+    "role": "integration-reviewer",
+    "code": "intrv"
+  },
+  "advisor": {
+    "kind": "omp",
+    "model": "fable",
+    "effort": null,
+    "args": ["--thinking=high"],
+    "role": "advisor",
+    "code": "adv"
+  }
+}

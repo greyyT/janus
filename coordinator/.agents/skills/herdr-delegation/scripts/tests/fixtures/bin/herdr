@@ -1,0 +1,66 @@
+#!/usr/bin/env node
+
+import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
+
+const journalPath = process.env.HERDR_FAKE_JOURNAL;
+const scriptPath = process.env.HERDR_FAKE_SCRIPT;
+
+if (!journalPath || !scriptPath) {
+  process.stderr.write(
+    "fake herdr requires HERDR_FAKE_JOURNAL and HERDR_FAKE_SCRIPT\n",
+  );
+  process.exit(1);
+}
+
+const entry = JSON.stringify({
+  argv: process.argv.slice(2),
+  cwd: process.cwd(),
+});
+
+appendFileSync(journalPath, `${entry}\n`, "utf8");
+
+let script;
+try {
+  script = JSON.parse(readFileSync(scriptPath, "utf8"));
+} catch (error) {
+  process.stderr.write(`fake herdr: invalid HERDR_FAKE_SCRIPT: ${error.message}\n`);
+  process.exit(1);
+}
+
+if (!Array.isArray(script)) {
+  process.stderr.write("fake herdr: HERDR_FAKE_SCRIPT must be a JSON array\n");
+  process.exit(1);
+}
+
+const statePath = `${journalPath}.index`;
+let index = 0;
+try {
+  index = Number.parseInt(readFileSync(statePath, "utf8"), 10) || 0;
+} catch {
+  index = 0;
+}
+
+if (index >= script.length) {
+  process.stderr.write("fake herdr: response script exhausted\n");
+  process.exit(1);
+}
+
+const response = script[index];
+writeFileSync(statePath, String(index + 1), "utf8");
+
+if (response.hang === true) {
+  setInterval(() => {}, 60_000);
+  // Remain running until the caller terminates this process.
+} else if (response.malformed === true) {
+  process.stdout.write("\u0000not-json{{");
+  process.exit(typeof response.exitCode === "number" ? response.exitCode : 0);
+} else {
+  if (response.stdout) {
+    process.stdout.write(response.stdout);
+  }
+  if (response.stderr) {
+    process.stderr.write(response.stderr);
+  }
+
+  process.exit(typeof response.exitCode === "number" ? response.exitCode : 0);
+}
