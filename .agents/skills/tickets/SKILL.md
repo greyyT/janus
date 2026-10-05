@@ -11,7 +11,7 @@ Tickets are Janus's unit of managed work: one deliverable, decision, investigati
 
 ### Files and ownership
 
-- `tickets/BOARD.md` is the canonical workflow state. Each ticket appears exactly once, as a wikilink under its state section, followed by ` · J-NNN`. Empty sections contain `_None._`.
+- `tickets/BOARD.md` is the canonical workflow state. Each ticket appears exactly once, as a wikilink under its state section, followed by ` · J-NNN`. `active` and `verifying` entries also end with ` · autonomous` or ` · human_required`; a `human_required` entry carries one sub-bullet `- needs user: <what the user must do>`. Empty sections contain `_None._`.
 - `tickets/J-NNN-<lowercase-kebab-slug>.md` owns the ticket's contract, current checkpoint, acceptance evidence, and work log.
 - Today's `journal/YYYY-MM-DD.md` records the morning `## Dispatch`, displacements under `## Changes`, and one-line session references under `### Ticket sessions` in `## Notes`. Never copy ticket content into the journal.
 - Project and goal pages under `brain/` own the higher-level understanding the ticket serves.
@@ -26,6 +26,7 @@ A ticket file has a `# Title · J-NNN` heading and these fields:
 - observable `done_when`, including verification where relevant;
 - `next_move`: the exact action that starts work now when unblocked;
 - `blocked_by`, or `none`;
+- `execution`, only while `active` or `verifying`: `autonomous — coordinator <id>: <what it is doing>` or `human_required — <what the user must do>`;
 - `## Current checkpoint`: only the latest resumable state;
 - `## Acceptance`: checklist, checked only on observable evidence;
 - `## Work log`: dated entries, append-only.
@@ -35,13 +36,31 @@ Do not manufacture implementation steps that do not reduce uncertainty. Do not a
 ### States
 
 - `ready`: worthwhile and actionable. At most five.
-- `active`: being worked. At most two discretionary tickets; autonomous agent work does not count against this when the user is not needed.
+- `active`: being worked. At most two `human_required` tickets across `active` and `verifying`; `autonomous` tickets are not limited.
 - `waiting`: progress depends on an explicit external event, person, or ticket. Requires `blocked_by` and a review condition.
 - `verifying`: a proposed result exists but acceptance evidence is incomplete.
 - `done`: outcome and acceptance evidence satisfied. Construction alone is insufficient when verification matters.
 - `dropped`: the user decided the outcome no longer deserves capacity. Record the reason.
 
 `done` and `dropped` do not reopen without an explicit decision and reason.
+
+### Execution and attention
+
+`active` says work is in progress; `execution` says whether it needs the user now. The limit protects the user's attention, not the number of agents making progress.
+
+- `autonomous`: an agent is making progress and the user is not needed until it reports. Always name the coordinator ID.
+- `human_required`: progress waits on the user — a decision, approval, review, live action, or merge — or the user is doing the work themselves. Always say what the user must do.
+
+| Event | `execution` |
+| --- | --- |
+| The user starts working the ticket themselves | `human_required` |
+| Janus hands the ticket to a coordinator | `autonomous`, naming the coordinator ID |
+| A coordinator reports | Janus triages the result first (coordinate mode); it becomes `human_required` only when Janus cannot resolve it from its knowledge and the user's prior decisions |
+| The whole outcome appears met | `verifying` and `human_required`: the user approves `done` |
+| The user answers and Janus relays it to the coordinator | `autonomous` |
+| An `autonomous` ticket's coordinator is not in `list_coordinators`, or coordinate mode is off | `human_required — coordinator lost; resume?` |
+
+Drop the field and the board marker when a ticket leaves `active` and `verifying`.
 
 ### Rendering
 
@@ -54,14 +73,15 @@ Janus acts without asking for:
 - reading and briefing;
 - moving `ready` → `active` when the user begins work;
 - writing checkpoints, work-log entries, and journal session references that reflect what the conversation or authoritative artifacts show;
-- moving between `active`, `waiting`, and `verifying` when the evidence is unambiguous.
+- moving between `active`, `waiting`, and `verifying` when the evidence is unambiguous;
+- setting `execution` and its board marker.
 
 Janus proposes and waits for the user's approval before:
 
 - creating a ticket whose outcome, done condition, or scope Janus inferred;
 - marking `done` or `dropped`;
 - displacing today's protected ticket or required pulls;
-- exceeding the `ready` or `active` limits;
+- exceeding the `ready` or `human_required` limits;
 - reopening a closed ticket.
 
 Never claim progress not supported by the user or an authoritative artifact. Treat routine board maintenance as silent housekeeping; mention it only when it is exceptional or affects a decision.
@@ -93,7 +113,7 @@ Trigger: the user describes work that should survive the conversation.
 Trigger: the user begins or resumes work on a ticket, or asks what to work on and a protected ticket exists.
 
 1. Preconditions: `waiting` cannot start until its blocker resolves; if starting would displace the protected ticket or required pulls, run Replan first.
-2. Move `ready` → `active` on the board. Do not duplicate entries for `active` or `verifying`.
+2. Move `ready` → `active` on the board. Do not duplicate entries for `active` or `verifying`. Set `execution`: `human_required` when the user works it themselves, `autonomous` when Janus hands it to a coordinator.
 3. Brief from Janus context only — do not inspect the source repository during the briefing itself. In natural language:
    - the immediate purpose and the live question that matters now;
    - only the prior context or decision that changes how to proceed;
@@ -119,7 +139,7 @@ When the trigger is implicit, propose the checkpoint in one or two lines rather 
    - update or clear `blocked_by` and the review condition;
    - check acceptance items only on observable evidence;
    - append one dated work-log entry: what changed, the key learning or decision, state, next move;
-   - move the board entry without duplicating it;
+   - move the board entry without duplicating it, and update `execution` and its board marker;
    - append a one-line title-and-ID reference under `### Ticket sessions` in today's journal.
 3. For a no-progress session, record the blocker or reason and a trustworthy next move. No achievement language.
 4. When the ticket names a project, propagate to it through the projects skill: if the checkpoint revealed an architectural constraint, new dependency, invalid assumption, milestone progress, new risk, decision, or direction change, update the project page. Routine progress does not touch the project.

@@ -42,6 +42,7 @@ tickets/
 | `done_when` | Observable completion, including verification. |
 | `next_move` | The exact action that starts work now. |
 | `blocked_by` | The blocker, or `none`. |
+| `execution` | While `active` or `verifying`: `autonomous` (which coordinator is running) or `human_required` (what the user must do). |
 | `## Current checkpoint` | Only the latest resumable state. |
 | `## Acceptance` | Checklist, checked only on evidence. |
 | `## Work log` | Dated, append-only history. |
@@ -53,11 +54,17 @@ The checkpoint is replaced on each update; history goes to the work log. A ticke
 | State | Meaning |
 | --- | --- |
 | `ready` | Worthwhile and actionable. At most five. |
-| `active` | Being worked. At most two that need the user's attention. |
+| `active` | Being worked. At most two `human_required` across `active` and `verifying`; `autonomous` tickets are not limited. |
 | `waiting` | Blocked on an explicit event, person, or ticket, with a review condition. |
 | `verifying` | A result exists; acceptance evidence is incomplete. |
 | `done` | Outcome and acceptance evidence satisfied. |
 | `dropped` | Deliberately abandoned, with a reason. |
+
+## Execution and attention
+
+An active ticket does not mean the user is working on it. Several tickets can progress at once through coordinators while the user does something else, so the scarce resource is the user's attention, not the number of active tickets. Each `active` or `verifying` ticket says which it needs: `autonomous` while an agent drives it, `human_required` while it waits on the user's decision, review, or hands-on work. The board shows this next to each entry, so "what needs me?" is one read.
+
+Coordinator results do not reach the user directly. Janus first checks each one against the ticket, the project's decisions, and the user's prior decisions. When those settle it, Janus answers the coordinator, records the decision and its source in the ticket's work log, and mentions it in one line. Only results that need the user's judgment — a new consequential choice, conflicting precedent, an action without a recorded grant, a blocker only the user can clear, or a finished outcome awaiting `done` — turn the ticket `human_required`.
 
 ## Lifecycle
 
