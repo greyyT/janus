@@ -74,20 +74,20 @@ Before the first TODO, read `TASK.md`, `TARGET_DESIGN.md` when present, `PLAN.md
 
 The rules in this subsection apply only when a task runs under **delegated commit-aligned execution**, or when **commit mode is active** for the task. Commit mode is the default only within delegated commit-aligned execution. Ordinary Tasks work — worked directly with no delegation and no commit mode — is unchanged: no `REVIEW.md` is required, no integration review gates completion, no commit step exists, and step closeout remains the completion rule in Execution above.
 
-When these rules apply, **commit mode is on by default**. The task owner may explicitly disable commit creation at any time before Janus creates the commit. Disabling commit mode does not weaken independent review, Janus triage, same-worker correction, the two-round cap, or narrow re-review.
+When these rules apply, **commit mode is on by default**. The task owner may explicitly disable commit creation at any time before the coordinator creates the commit. Disabling commit mode does not weaken independent review, coordinator triage, same-worker correction, the two-round cap, or narrow re-review.
 
 Per-TODO sequence in commit mode:
 
 1. The worker implements and self-verifies without closing the Tasks step.
-2. An independent reviewer reviews at the accepted effort — except a remediation TODO that adopts a retained integration reviewer, which instead runs at that reviewer's configured effort; Janus verifies and triages findings, preserving bounded same-worker correction.
-3. After approval, Janus stages, creates, and verifies the exact local implementation commit containing only the approved change.
-4. Only after commit verification does Janus update ignored local `STEP-<N>.md` and `TODOs.md` and record commit evidence.
+2. An independent reviewer reviews at the accepted effort — except a remediation TODO that adopts a retained integration reviewer, which instead runs at that reviewer's configured effort; the coordinator verifies and triages findings, preserving bounded same-worker correction.
+3. After approval, the coordinator stages, creates, and verifies the exact local implementation commit containing only the approved change.
+4. Only after commit verification does the coordinator update ignored local `STEP-<N>.md` and `TODOs.md` and record commit evidence.
 
 Because Tasks artifacts are globally ignored local planning state, those bookkeeping updates require no separate commit, amend, or self-referential commit hash. A commit failure leaves the step incomplete; do not mark the TODO done or set `Status: COMPLETED`. Never push automatically, and never push unless explicitly authorized elsewhere.
 
-In explicit no-commit mode, implementation and independent review proceed unchanged. After approval, Janus closes local Tasks state, records that the task owner disabled commit creation, and preserves a concise reviewed-change surface in `STEP-<N>.md` so later task-wide review stays bounded. Existing commits are never rewritten merely because commit mode later changes.
+In explicit no-commit mode, implementation and independent review proceed unchanged. After approval, the coordinator closes local Tasks state, records that the task owner disabled commit creation, and preserves a concise reviewed-change surface in `STEP-<N>.md` so later task-wide review stays bounded. Existing commits are never rewritten merely because commit mode later changes.
 
-Janus may reread completed `STEP-<N>.md` records specifically to compile bounded input for task-wide integration review: recorded TODO commits where present, and reviewed change surfaces for no-commit or mixed-mode steps. This is a narrow exception to the ordinary rule that later TODOs need not reload old STEP files; it does not impose a schema on `REVIEW.md`.
+The coordinator may reread completed `STEP-<N>.md` records specifically to compile bounded input for task-wide integration review: recorded TODO commits where present, and reviewed change surfaces for no-commit or mixed-mode steps. This is a narrow exception to the ordinary rule that later TODOs need not reload old STEP files; it does not impose a schema on `REVIEW.md`.
 
 ## Task-wide integration review
 

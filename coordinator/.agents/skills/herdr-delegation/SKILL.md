@@ -1,6 +1,6 @@
 ---
 name: herdr-delegation
-description: Spawn a predefined agent in a recorded Herdr pane and submit its staged task prompt, waiting for the result. Use when the user requests an agent or a separately authorized workflow needs one.
+description: Spawn a predefined agent in a recorded Herdr pane and submit its staged task prompt, waiting for the result. Use when the coordinator decides a step is better done by a worker, or a workflow needs one.
 ---
 
 # Herdr delegation
@@ -25,7 +25,7 @@ These are the names to pass to the helper. `scripts/registry.json` remains autho
 
 ## Spawn and run the first turn
 
-1. Confirm the user requested an agent, or the calling workflow already has verified authority. This skill does not grant authority. Refuse Herdr control unless `test "${HERDR_ENV:-}" = 1` succeeds and `HERDR_PANE_ID` is set. Check installed `herdr --help` when syntax differs.
+1. Confirm the user's request covers delegated work on this repository, or the calling workflow has verified authority; this skill grants no authority beyond that. Refuse Herdr control unless `test "${HERDR_ENV:-}" = 1` succeeds and `HERDR_PANE_ID` is set. Check installed `herdr --help` when syntax differs.
 2. Choose a variant from **Available variants** above. The registry fixes its Herdr kind, model, effort, startup arguments, and role prompt. Do not override them with ad hoc flags or prompt instructions.
 3. Write a task-specific prompt to a unique `/tmp/*.md` file **before** invoking the helper. Include the outcome, relevant sources, allowed actions, non-goals, stopping condition, and a distinct exact `/tmp/*.md` result path. Do not put credentials in it.
 4. Inspect layout and create a visible sibling pane, without stealing focus, in the work's directory:

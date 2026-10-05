@@ -24,7 +24,7 @@ If new evidence shows that the accepted target is impossible, unsafe, or cannot 
 
 This gate applies only when a task will be executed through delegated commit-aligned execution. Ordinary, non-delegated Tasks planning is unchanged and proceeds directly to `PLAN.md` and `TODOs.md` under the rest of this contract.
 
-Before writing canonical `PLAN.md` or `TODOs.md`, the planner retained for the delegated planning run and Janus as the delegating orchestrator negotiate a run-specific, inspectable execution map at a named `/tmp` path. For every proposed implementation slice, the map records:
+Before writing canonical `PLAN.md` or `TODOs.md`, the planner retained for the delegated planning run and the coordinator as the delegating orchestrator negotiate a run-specific, inspectable execution map at a named `/tmp` path. For every proposed implementation slice, the map records:
 
 - outcome;
 - dependencies;
@@ -36,9 +36,9 @@ Before writing canonical `PLAN.md` or `TODOs.md`, the planner retained for the d
 
 Size and review effort are independent. When review effort is uncertain, use `medium`. A `large` slice must state why splitting it would not produce a safer coherent boundary.
 
-The complete negotiation has a flexible budget of three substantive planner turns. A turn may combine questions, a map proposal, and revisions; there is no per-activity quota. Mechanical handoff retries and time spent waiting for an owner decision do not consume turns. Janus may accept the map earlier. After the third unresolved substantive turn, Janus must accept it, reject it, escalate the unresolved issue to the task owner, or mark planning blocked.
+The complete negotiation has a flexible budget of three substantive planner turns. A turn may combine questions, a map proposal, and revisions; there is no per-activity quota. Mechanical handoff retries and time spent waiting for an owner decision do not consume turns. The coordinator may accept the map earlier. After the third unresolved substantive turn, the coordinator must accept it, reject it, escalate the unresolved issue to the task owner, or mark planning blocked.
 
-Only after Janus accepts the map may the planner write canonical `PLAN.md` and derive `TODOs.md`. `PLAN.md` then owns the accepted slice metadata and implementation argument; the temporary map remains only a plan-review fidelity input and has no canonical authority after `PLAN.md` and `TODOs.md` are approved. Pass the accepted map path to the retained planner and independent plan reviewer, never to an implementation worker. If the map is lost before plan approval, terminate and restart planning; never reconstruct accepted slicing from memory.
+Only after the coordinator accepts the map may the planner write canonical `PLAN.md` and derive `TODOs.md`. `PLAN.md` then owns the accepted slice metadata and implementation argument; the temporary map remains only a plan-review fidelity input and has no canonical authority after `PLAN.md` and `TODOs.md` are approved. Pass the accepted map path to the retained planner and independent plan reviewer, never to an implementation worker. If the map is lost before plan approval, terminate and restart planning; never reconstruct accepted slicing from memory.
 
 ## What the plan must settle
 

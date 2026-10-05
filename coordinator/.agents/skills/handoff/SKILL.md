@@ -17,13 +17,13 @@ Replace the current session with exactly one fresh session.
 2. Write a resume packet to a temporary Markdown file using the template and the drafting instructions below.
 3. Review the packet before transfer:
    - the objective, current state, and exact next action are understandable without the source conversation;
-   - existing specifications, plans, ADRs, issues, commits, diffs, and durable Janus notes are referenced rather than copied;
+   - existing specifications, plans, ADRs, issues, commits, diffs, and durable notes are referenced rather than copied;
    - `<read-files>` contains at most three exact files required at the beginning—no directories, globs, or speculative reading;
    - `<modified-files>` contains only files relevant to this work and does not instruct the destination to read all of them;
    - suggested skills are installed and relevant to the next action;
    - no credentials, authentication material, signed URLs, private keys, environment values, or unnecessary sensitive personal or customer information appear.
 
-Preserve paths, ticket IDs, branch names, decision owners, and other identifiers when genuinely required to resume. For a secret, name its secure source or the command that retrieves it without reproducing the value.
+Preserve paths, issue IDs, branch names, decision owners, and other identifiers when genuinely required to resume. For a secret, name its secure source or the command that retrieves it without reproducing the value.
 
 If writing or reviewing the packet fails, report the blocker and stop without running the script.
 
@@ -43,7 +43,7 @@ Before transfer, ask: could the destination perform the immediate action without
 
 ## Run the handoff
 
-After reviewing the packet, choose a descriptive session name based on the work being continued, such as `Review ticket handoff`. Pass it to the script; do not omit it or ask the user to name the session. The script starts Pi with `--name` and generates the separate Herdr agent identifier internally.
+After reviewing the packet, choose a descriptive session name based on the work being continued, such as `Review task handoff`. Pass it to the script; do not omit it or ask the user to name the session. The script starts Pi with `--name` and generates the separate Herdr agent identifier internally.
 
 Invoke the script once using its absolute path (resolve `scripts/handoff` relative to this skill directory):
 
