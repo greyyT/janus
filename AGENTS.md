@@ -4,7 +4,7 @@ Janus is a Markdown-first knowledge system and personal operating system.
 
 ## Knowledge locations
 
-- `journal/` contains dated daily journals for chronological working memory, daily tasks, notes, check-ins, and checkout reflections.
+- `journal/` contains dated passive daily records: the dispatch, material changes, ticket-session references, decisions no ticket owns, and rough notes.
 - `tickets/` holds managed work: `tickets/BOARD.md` is the canonical state and each ticket file owns its checkpoint and history. See `docs/ticket.md`.
 - `brain/` contains promoted, durable wiki knowledge.
 - `brain/Precedents.md` holds accepted reusable judgment, and `brain/Grants.md` holds standing authority and the list of grant-gated actions. See `docs/decisions.md`.
@@ -12,8 +12,7 @@ Janus is a Markdown-first knowledge system and personal operating system.
 - Non-default Markdown files placed directly in the repository root are standalone inbox captures unless protected.
 - Root inbox notes are temporary and may be incomplete, incorrect, or unverified.
 - Source code and repository-local documentation remain authoritative for code behavior.
-- `.janus/digest-ledger.md` is local operational checklist state for `/digest`; it is not durable knowledge.
-- `.janus/calendar/` is local optional calendar link config and input for `/checkin`; it is not durable knowledge.
+- `.janus/calendar/` is local optional calendar feed config read by `pnpm brain:calendar`; it is not durable knowledge.
 
 ## Source-of-truth hierarchy
 
@@ -41,8 +40,8 @@ Read `commands.md` first. Use it as the local command contract for available scr
 
 ## Capturing knowledge
 
-- Use today's `journal/YYYY-MM-DD.md` note for daily working memory, committed task blocks, rough notes, check-ins, checkout reflections, and lightweight follow-ups.
-- Use tickets for work that should survive beyond today; use the calendar for fixed-time actions.
+- Use today's `journal/YYYY-MM-DD.md` only for the dispatch, material changes, ticket-session references, decisions no ticket owns, and rough notes. Never copy ticket content into the journal.
+- The journal is not an execution or reminder surface: route fixed-time actions to the calendar, and work that should survive the conversation to tickets or the board inbox.
 - For standalone thoughts, articles, ideas, or topics that deserve their own identity, create a Markdown file directly in the Janus root.
 - Do not require frontmatter, tags, templates, or classification for root notes.
 - Do not store durable technical facts only in a root inbox note, ticket, or journal note.
@@ -56,7 +55,7 @@ When promoting a root note:
 1. Determine whether it is a project, system, decision, pattern, playbook, concept, or investigation.
 2. Move it under the correct `brain/` location.
 3. Add frontmatter and a stable title.
-4. Link it from the relevant project index.
+4. Link it from the relevant project entry page or content-oriented wiki page.
 5. Preserve important history; archive rather than silently erasing superseded decisions.
 6. Archive approved promoted root captures under `brain/archive/inbox/`; if the destination exists, stop and ask before writing.
 

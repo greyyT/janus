@@ -10,15 +10,19 @@ The long-term goal is simple: when I start a session, Janus should already know 
 
 ## what Janus is for
 
-Janus keeps four kinds of Markdown memory separate.
+Janus keeps its Markdown memory in separate places, each with one job.
 
-`journal/` is daily working memory. It holds dated notes like `journal/2026-06-25.md`, with morning check-in context, committed task blocks, loose notes, links, and checkout reflections including wellbeing.
+Managed work lives in `tickets/`: `tickets/BOARD.md` is the canonical state, and each `J-NNN` ticket file carries its outcome, current checkpoint, acceptance evidence, and work log. See `docs/ticket.md`.
 
-Managed work lives in `tickets/`. See `docs/ticket.md`.
+Projects live under `brain/projects/`. A project page holds what Janus currently believes about an initiative or a repository; tickets feed it. See `docs/project.md`.
+
+Decisions and authority are kept apart. My decisions are logged as they happen; reusable ones become precedents in `brain/Precedents.md` once I approve them; permissions for protected actions such as pushes, merges, and deploys are grants in `brain/Grants.md` or on the ticket. See `docs/decisions.md`.
+
+`journal/` is a passive daily record: the dispatch, material changes, ticket-session references, decisions no ticket owns, and rough notes. It is not a todo list or a reminder surface.
 
 Root Markdown files are inbox captures. These are standalone thoughts that deserve their own title, source context, or likely promotion path. They can be incomplete or wrong. They are allowed to be messy.
 
-`brain/` is durable knowledge. Notes in `brain/` should be maintained, linked from the right project page, and treated as more deliberate than root inbox notes.
+`brain/` is durable knowledge. Notes in `brain/` should be maintained, linked from the right project page or wiki page, and treated as more deliberate than root inbox notes.
 
 Markdown remains the source of truth.
 
@@ -30,99 +34,70 @@ In practice, that means:
 
 - every agent session starts from this repo;
 - Janus knows the current work, prior decisions, and active project context;
+- Janus coordinates repository work through coordinators and asks me only when my judgment or authority is actually needed;
 - project pages explain how an agent should behave for that project;
-- commands and instructions make rough notes usable without requiring manual organization first;
+- rough notes become usable without requiring manual organization first;
 - durable knowledge gets promoted into `brain/` when it earns that status;
 - generated indexes help agents navigate, but never replace the Markdown.
 
 The important part is the boundary. I should be able to drop anything into Janus quickly, then rely on agents and repo rules to sort out how that information should be interpreted later.
 
-## current state
+## how a session works
 
-Janus is currently at v0.3.
+There are no daily rituals to remember. Janus recognizes what the conversation needs through its skills in `.agents/skills/`:
 
-It supports:
+- `tickets` captures, starts, checkpoints, and replans managed work;
+- `projects` creates, updates, reviews, and closes projects from ticket evidence;
+- `decisions` records my decisions, proposes precedents, and maintains grants.
 
-- root inbox notes;
-- tickets in `tickets/` with stable `J-###` IDs;
-- daily journal notes in `journal/YYYY-MM-DD.md`;
-- an Obsidian journal template at `templates/journal.md`;
-- optional read-only Google/iCalendar feed planning configured in `.janus/calendar/config.json`;
-- tests for the brain tooling.
+Each active ticket says whether it needs me: `autonomous` while an agent drives it, `human_required` while it waits on my decision, review, or hands-on work. At most two tickets need my attention at once; autonomous work is not limited.
+
+## coordinate mode
+
+Run `/coordinate` in a Janus pi session inside a Herdr pane to turn on coordinate mode for the rest of the session. Janus then hands repository work to coordinators: each one is a pi agent in `coordinator/` that drives one request in one repository to a verified result through worker agents. See `coordinator/README.md`.
+
+I talk only to Janus. Coordinators report back on their own; Janus checks each result against its precedents, project direction, and grants, answers what it can, and brings me only what needs my judgment or authority. Coordinators never see tickets, and each request carries only the permissions Janus resolved for it.
+
+Coordinate mode needs `pi` and `herdr` on `PATH`.
 
 ## repository map
 
 ```text
 janus/
-├── AGENTS.md
+├── AGENTS.md               # locations, authority, and rules agents follow
 ├── README.md
-├── journal/
-│   ├── .gitkeep
-│   └── YYYY-MM-DD.md
+├── commands.md             # reference for package.json scripts
+├── docs/                   # how tickets, projects, and decisions work
+├── .agents/skills/         # tickets, projects, decisions
+├── .pi/extensions/         # /coordinate mode
+├── coordinator/            # the coordinator Janus spawns per request
 ├── brain/
 │   ├── HOME.md
+│   ├── Precedents.md
+│   ├── Grants.md
 │   └── projects/
-│       └── janus/
-│           ├── INDEX.md
-│           ├── architecture.md
-│           ├── journal-workflow.md
-│           ├── daily-workflow.md
-│           ├── vision.md
-│           ├── digest-workflow.md
-│           ├── decisions/
-│           └── sketches/
+├── tickets/                # BOARD.md and J-NNN files, created by the first capture
+├── journal/
 ├── templates/
 │   └── journal.md
 └── tools/
-    └── brain/
+    └── brain/              # calendar scripts
 ```
-
-## daily workflow
-
-Capture work as tickets; see `docs/ticket.md`.
-
-Start the day with `/checkin`. It creates today's journal note if missing, reconciles unfinished tasks from the latest prior journal, reads the ticket board and optional calendar context, asks for missing judgment, and commits selected task blocks into today's `## Todo`.
-
-During the day, use:
-
-```text
-journal/YYYY-MM-DD.md
-```
-
-for committed work and notes.
-
-End the day with `/checkout`. It marks completed task blocks `[x]`, leaves unfinished task blocks unchecked, writes wellbeing and reflection under `## Checkout`, and reviews the daily note for selective digest actions.
 
 The journal template contains:
 
 ```md
-## Check-in
+## Dispatch
 
-- capacity:
-- primary_outcome:
-- calendar_summary:
-- constraints:
-
-## Todo
-
-- [ ]
+## Changes
 
 ## Notes
 
-## Checkout
-
-- wellbeing:
-- worked:
-- improve:
-- handoff:
-- next_step:
-- task_decisions:
-- digest:
+### Ticket sessions
 ```
 
-Janus does not automatically roll unfinished tasks into tomorrow. The next `/checkin` explicitly recommits, returns, splits, cancels, or completes prior unfinished tasks.
-
 ## commands
+
 See [`commands.md`](commands.md) for the maintained command reference generated from `package.json` scripts.
 
 Install dependencies:
@@ -150,9 +125,7 @@ Type-check the tooling:
 pnpm exec tsc --noEmit
 ```
 
-## how the commands behave
-
-`brain:calendar:add` stores read-only iCalendar feed links in gitignored `.janus/calendar/config.json`. `brain:calendar` live-fetches configured feeds, returns calendar-labeled events and merged busy blocks for the planning day, and falls back to legacy `.janus/calendar/primary.ics` only when no feed list is configured. Missing or unreachable calendar input produces an unavailable state or warnings instead of blocking `/checkin`.
+`brain:calendar:add` stores read-only iCalendar feed links in gitignored `.janus/calendar/config.json`. `brain:calendar` live-fetches configured feeds and returns calendar-labeled events and merged busy blocks for the day, falling back to legacy `.janus/calendar/primary.ics` only when no feed list is configured. Missing or unreachable calendar input produces an unavailable state or warnings rather than an error.
 
 ## source of truth
 
@@ -166,22 +139,8 @@ When two pieces of information disagree, use this order:
 
 Root inbox notes and journal notes can be rough. Durable claims should move into `brain/` after they are checked.
 
-## future agent workflow
-
-Right now, Janus relies on harness-native commands and small deterministic scripts. An agent working inside Janus should be able to:
-
-- inspect the inbox at the start of a session;
-- refresh the index when Markdown changes;
-- read today's journal before starting work;
-- guide the user through morning check-ins and evening checkouts;
-- surface unfinished tasks and project follow-ups;
-- choose the right project instructions before acting;
-- promote durable knowledge into `brain/` with links back to the project page.
-
-That agent is Janus in the fuller sense: an orchestrator that keeps my engineering context warm across sessions, backed by small scripts when scripts are enough.
-
 ## non-goals for now
 
 Janus is not trying to be a database, a dashboard, a notification system, or a full task manager.
 
-v0.3 intentionally avoids automatic task rollover, automatic scheduling, priorities, reminders, graphs, embeddings, semantic search, and Obsidian plugin code. The current system stays boring: Markdown first, small commands, clear rules.
+It intentionally avoids automatic scheduling, priorities, reminders, graphs, embeddings, semantic search, and Obsidian plugin code. The system stays boring: Markdown first, small skills and scripts, clear rules.
