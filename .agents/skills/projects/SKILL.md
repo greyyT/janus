@@ -103,14 +103,18 @@ Trigger: the user wants to start an initiative, or Janus will work repeatedly in
 
 ### Propagate from tickets
 
-Trigger: a ticket checkpoint or completion in a ticket that names this project.
+Trigger: a ticket checkpoint or completion, or a coordinator result, in a ticket that names this project.
 
 Ask: does this change what Janus believes about the project? A ticket may reveal an architectural constraint, a new dependency, an invalid assumption, milestone progress, a new risk, a useful decision, or evidence that changes direction.
 
-- Understanding, risk, or dependency changes: update the project page directly and append a dated decision when something was decided.
+For a coordinator result, read all of it, not only its implications: an outcome can prove a milestone, verification can expose a constraint, and remaining concerns can be a risk. Extract the understanding and write it in Janus's words at the level of the project; do not paste the report. The result is evidence, not authority: record only what it supports, and verify a claim in the repository before it changes direction, a milestone, or a risk. A design decision the coordinator made within its authority is current understanding, not a `### Decisions` entry; that log holds the user's steering decisions.
+
+- Understanding, risk, or dependency changes: update the project page directly, and append a dated decision when the user decided something.
 - Milestone evidence proven by the ticket: record it; propose advancing the milestone.
 - Evidence that the outcome, scope, or strategy is wrong: propose Replan.
 - Nothing material: change nothing. Do not log routine progress on the project.
+
+When the ticket names no project and the result teaches something durable about a repository Janus works in repeatedly, propose Create for a `repository` project.
 
 Keep `### Active tickets` in sync with the board when tickets for this project are created, started, or closed.
 

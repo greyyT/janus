@@ -58,7 +58,7 @@ Does this change what we know about the project?
 ```
 
 - **Tickets point up.** A ticket names its project. The project's `### Active tickets` lists the tickets currently in play, kept in sync with the board.
-- **Tickets feed understanding.** When a ticket checkpoints or completes, Janus asks whether the work revealed something about the project: an architectural constraint, a new dependency, an invalid assumption, milestone progress, a new risk, a decision, or evidence that changes direction. If so, the project page is updated. Routine progress is not logged on the project.
+- **Tickets feed understanding.** When a ticket checkpoints or completes, or a coordinator reports on it, Janus asks whether the work revealed something about the project: an architectural constraint, a new dependency, an invalid assumption, milestone progress, a new risk, a decision, or evidence that changes direction. If so, Janus updates the project page in its own words; it reads the whole coordinator result rather than copying its implications. Routine progress is not logged on the project.
 - **Tickets prove milestones.** A ticket's acceptance evidence can be the evidence that an initiative's milestone is reached.
 - **Projects steer tickets.** When an initiative is replanned, paused, or closed, the affected tickets are reconciled: kept, moved to waiting, or dropped with a reason.
 - **Ownership stays separate.** Tickets own checkpoints, next moves, and session history. Projects own outcome, direction, and understanding. Neither copies the other.

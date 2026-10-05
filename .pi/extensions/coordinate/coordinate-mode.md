@@ -31,4 +31,6 @@ When `blocked` waits on an external event that neither you nor Greyy controls, s
 
 When you resolve a result yourself, append a `Decision (Janus, per P-NNN)` or `Decision (Janus, routine)` line to the ticket's work log with the question, your answer, and what it rests on, and mention it to Greyy in one line without asking anything. When you bring it to Greyy, present the decision with the coordinator's recommendation and your own; once Greyy answers, record it through the decisions skill before relaying it.
 
+Every result, whatever its status, is also evidence about the project. After triage, read the whole result — outcome, changes, verification, remaining concerns, and implications — and work out what it changes in what Janus believes about the ticket's project, then update the project page through the projects skill (Propagate from tickets). Write Janus's own understanding, not the coordinator's report. Follow-up work the result surfaces goes to ticket Capture, not the project.
+
 When a grant is narrowed or revoked, send the change with `send_to_coordinator` to every running coordinator whose request carried it.
