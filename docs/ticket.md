@@ -45,7 +45,8 @@ tickets/
 | `execution` | While `active` or `verifying`: `autonomous` (which coordinator is running) or `human_required` (what the user must do). |
 | `## Current checkpoint` | Only the latest resumable state. |
 | `## Acceptance` | Checklist, checked only on evidence. |
-| `## Work log` | Dated, append-only history. |
+| `## Grants` | Permissions the user granted for this work only; see `docs/decisions.md`. |
+| `## Work log` | Dated, append-only history, including one `Decision (user):` line per decision. |
 
 The checkpoint is replaced on each update; history goes to the work log. A ticket should always read as "here is where things stand," not as a pile of past states.
 

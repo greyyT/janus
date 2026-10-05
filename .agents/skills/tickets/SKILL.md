@@ -29,7 +29,8 @@ A ticket file has a `# Title · J-NNN` heading and these fields:
 - `execution`, only while `active` or `verifying`: `autonomous — coordinator <id>: <what it is doing>` or `human_required — <what the user must do>`;
 - `## Current checkpoint`: only the latest resumable state;
 - `## Acceptance`: checklist, checked only on observable evidence;
-- `## Work log`: dated entries, append-only.
+- `## Grants`, only when the user granted permissions for this work: `work`-scope grants in the `brain/Grants.md` entry format without an ID, expiring at `ticket close` unless stated otherwise;
+- `## Work log`: dated entries, append-only. Each decision the user makes is its own `Decision (user):` line, written through the decisions skill.
 
 Do not manufacture implementation steps that do not reduce uncertainty. Do not accumulate superseded next moves in the header; history belongs in the work log.
 
@@ -138,7 +139,7 @@ When the trigger is implicit, propose the checkpoint in one or two lines rather 
    - update `next_move` (`none — ticket complete` for done, `none — ticket dropped` for dropped);
    - update or clear `blocked_by` and the review condition;
    - check acceptance items only on observable evidence;
-   - append one dated work-log entry: what changed, the key learning or decision, state, next move;
+   - append one dated work-log entry: what changed, the key learning or decision, state, next move; record each user decision as a separate `Decision (user):` line through the decisions skill;
    - move the board entry without duplicating it, and update `execution` and its board marker;
    - append a one-line title-and-ID reference under `### Ticket sessions` in today's journal.
 3. For a no-progress session, record the blocker or reason and a trustworthy next move. No achievement language.

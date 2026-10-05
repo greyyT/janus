@@ -7,6 +7,8 @@ Janus is a Markdown-first knowledge system and personal operating system.
 - `journal/` contains dated daily journals for chronological working memory, daily tasks, notes, check-ins, and checkout reflections.
 - `tickets/` holds managed work: `tickets/BOARD.md` is the canonical state and each ticket file owns its checkpoint and history. See `docs/ticket.md`.
 - `brain/` contains promoted, durable wiki knowledge.
+- `brain/Precedents.md` holds accepted reusable judgment, and `brain/Grants.md` holds standing authority and the list of grant-gated actions. See `docs/decisions.md`.
+- Load the `decisions` skill whenever the user answers a decision Janus brought to them, or states or changes a reusable decision, standing permission, explicit prohibition, or "from now on" behavior.
 - Non-default Markdown files placed directly in the repository root are standalone inbox captures unless protected.
 - Root inbox notes are temporary and may be incomplete, incorrect, or unverified.
 - Source code and repository-local documentation remain authoritative for code behavior.
@@ -20,6 +22,10 @@ Janus is a Markdown-first knowledge system and personal operating system.
 3. Journal notes under `journal/` as chronological personal records.
 4. Root inbox notes.
 5. Generated indexes, embeddings, summaries, and harness auto-memory.
+
+## Authority
+
+Before Janus or a coordinator performs a grant-gated action (listed in `brain/Grants.md`), it needs an applicable grant: an unexpired grant with uses remaining, at `global` or `project` scope in `brain/Grants.md`, or at `work` scope in the ticket's `## Grants`. The action is authorized only when an applicable grant allows it and none excludes it; exclusions always win over grants. Neither a precedent nor project direction grants authority. Without an authorizing grant, ask the user: their direct approval of that exact action authorizes it once.
 
 ## Before making a technical decision
 
