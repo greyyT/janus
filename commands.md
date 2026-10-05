@@ -16,6 +16,7 @@ pnpm <script> -- <variables>
 | --- | --- | --- |
 | `brain:calendar` | `tsx tools/brain/calendar.ts` | `--date YYYY-MM-DD`, `--json` |
 | `brain:calendar:add` | `tsx tools/brain/calendar-add.ts` | `--url URL`, `--name TEXT`, `--timezone TZ`, `--json` |
+| `brain:sessions` | `tsx tools/brain/sessions.ts` | `--date YYYY-MM-DD`, `--json` |
 | `test` | `vitest run` | Janus defines none; pass Vitest args after `--`. |
 
 ## Variables
@@ -39,3 +40,11 @@ pnpm <script> -- <variables>
 - `--name TEXT`: optional display label. Default: first unused `Calendar N`.
 - `--timezone TZ`: optional global planning time zone written to `.janus/calendar/config.json`.
 - `--json`: print `{ action, config_path, calendar, calendar_count }`.
+
+### `brain:sessions`
+
+- `--date YYYY-MM-DD`: local calendar day to list. Default: today.
+- Lists pi transcripts of Janus sessions — sessions whose working directory is the Janus root — with at least one entry on that day. Coordinator sessions run in `coordinator/` and are excluded.
+- Reads transcripts from `PI_CODING_AGENT_SESSION_DIR`, else `PI_CODING_AGENT_DIR/sessions`, else `~/.pi/agent/sessions`.
+- Coordinator results appear inside these transcripts as user turns wrapped in `<coordinator_result>`; they are coordinator output, not the user's words.
+- `--json`: print `{ date, sessions_dir, sessions: [{ path, name, firstActivity, lastActivity }] }`; activity times are ISO timestamps of the first and last entries on that day.

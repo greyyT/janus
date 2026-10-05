@@ -10,6 +10,7 @@
   "scripts": {
     "brain:calendar": "tsx tools/brain/calendar.ts",
     "brain:calendar:add": "tsx tools/brain/calendar-add.ts",
+    "brain:sessions": "tsx tools/brain/sessions.ts",
     "test": "vitest run"
   },
   "devDependencies": {

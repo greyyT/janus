@@ -113,6 +113,12 @@ pnpm brain:calendar:add -- --url "webcal://calendar.google.com/calendar/ical/...
 pnpm brain:calendar -- --date YYYY-MM-DD --json
 ```
 
+List the day's Janus conversation transcripts, excluding coordinator sessions:
+
+```sh
+pnpm brain:sessions -- --date YYYY-MM-DD --json
+```
+
 Run tests:
 
 ```sh

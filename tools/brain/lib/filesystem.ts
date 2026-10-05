@@ -225,6 +225,6 @@ async function walkBrainDirectory(repositoryRoot: string, directory: string): Pr
   return files;
 }
 
-function isNotFoundError(error: unknown): boolean {
+export function isNotFoundError(error: unknown): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }
