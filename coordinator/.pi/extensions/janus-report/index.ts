@@ -18,7 +18,8 @@ function formatProblems(result: string): string[] {
 const failureReport = (outcome: string) => `STATUS: failed\n\nOUTCOME:\n${outcome}`;
 
 // Runs only in coordinators spawned by Janus's `/coordinate` mode, which sets
-// both variables. Every stop that is not an abort reports back to Janus.
+// both variables; a handoff passes them on. Each session tells Janus which
+// pane it runs in, and every stop that is not an abort reports back to Janus.
 export default function janusReport(pi: ExtensionAPI): void {
   const socketPath = process.env.JANUS_COORDINATE_SOCKET;
   const coordinatorId = process.env.JANUS_COORDINATOR_ID;
@@ -26,12 +27,22 @@ export default function janusReport(pi: ExtensionAPI): void {
 
   let remindersSent = 0;
 
-  const sendToJanus = (result: string) =>
+  const sendToJanus = (report: { result: string } | { pane: string }) =>
     new Promise<void>((resolve, reject) => {
-      const socket = createConnection(socketPath, () => socket.end(JSON.stringify({ id: coordinatorId, result })));
+      const socket = createConnection(socketPath, () => socket.end(JSON.stringify({ id: coordinatorId, ...report })));
       socket.on("close", () => resolve());
       socket.on("error", reject);
     });
+
+  pi.on("session_start", async (_event, ctx) => {
+    const pane = process.env.HERDR_PANE_ID;
+    if (!pane) return;
+    try {
+      await sendToJanus({ pane });
+    } catch (error) {
+      ctx.ui.notify(`Could not reach Janus at ${socketPath}: ${(error as Error).message}`, "error");
+    }
+  });
 
   pi.on("agent_before_settle", async (event, ctx) => {
     if (event.outcome === "aborted" || event.continue) return;
@@ -55,7 +66,7 @@ export default function janusReport(pi: ExtensionAPI): void {
 
     remindersSent = 0;
     try {
-      await sendToJanus(result);
+      await sendToJanus({ result });
     } catch (error) {
       ctx.ui.notify(`Could not report to Janus at ${socketPath}: ${(error as Error).message}`, "error");
     }

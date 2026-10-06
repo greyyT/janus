@@ -50,8 +50,12 @@ function runHerdr(stage, args) {
   return result.stdout;
 }
 
+// A coordinator spawned by Janus keeps its identity, so its reports still reach Janus.
+const janusEnv = ["JANUS_COORDINATE_SOCKET", "JANUS_COORDINATOR_ID"]
+  .filter(key => process.env[key])
+  .flatMap(key => ["--env", `${key}=${process.env[key]}`]);
 const splitResponse = runHerdr("split", [
-  "pane", "split", "--pane", sourcePaneId, "--direction", "right", "--cwd", process.cwd(), "--no-focus",
+  "pane", "split", "--pane", sourcePaneId, "--direction", "right", "--cwd", process.cwd(), "--no-focus", ...janusEnv,
 ]);
 try {
   context.destinationPaneId = JSON.parse(splitResponse)?.result?.pane?.pane_id;

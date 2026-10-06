@@ -44,16 +44,25 @@ export default function coordinate(pi: ExtensionAPI): void {
     if (next) pi.sendUserMessage(next);
   };
 
-  const receiveResult = (payload: string, ctx: ExtensionCommandContext) => {
-    let report: { id: string; result: string };
+  // A coordinator sends `{ id, pane }` when a session starts, including the
+  // fresh session a handoff creates, and `{ id, result }` at each stop.
+  const receiveReport = (payload: string, ctx: ExtensionCommandContext) => {
+    let report: { id: string; result?: string; pane?: string };
     try {
       report = JSON.parse(payload);
     } catch {
       ctx.ui.notify(`Ignored a malformed coordinator report: ${payload.slice(0, 200)}`, "warning");
       return;
     }
-    const name = coordinators.get(report.id)?.name ?? "unknown";
-    pendingResults.push(`<coordinator_result id="${report.id}" name="${name}">\n${report.result}\n</coordinator_result>`);
+    const coordinator = coordinators.get(report.id);
+    if (report.pane !== undefined) {
+      if (coordinator && coordinator.paneId !== report.pane) {
+        coordinator.paneId = report.pane;
+        ctx.ui.notify(`Coordinator ${report.id} (${coordinator.name}) continues in pane ${report.pane}.`, "info");
+      }
+      return;
+    }
+    pendingResults.push(`<coordinator_result id="${report.id}" name="${coordinator?.name ?? "unknown"}">\n${report.result}\n</coordinator_result>`);
     if (isJanusIdle()) deliverNextResult();
   };
 
@@ -63,7 +72,7 @@ export default function coordinate(pi: ExtensionAPI): void {
         let payload = "";
         socket.setEncoding("utf8");
         socket.on("data", chunk => (payload += chunk));
-        socket.on("end", () => receiveResult(payload, ctx));
+        socket.on("end", () => receiveReport(payload, ctx));
       });
       resultServer.once("error", reject);
       resultServer.listen(SOCKET_PATH, () => resolve(resultServer));

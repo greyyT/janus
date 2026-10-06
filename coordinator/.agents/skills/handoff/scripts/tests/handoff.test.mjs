@@ -37,7 +37,8 @@ function launch(overrides = {}, packetPath = packet, sessionName = "Review ticke
     cwd: directory,
     env: {
       ...process.env, PATH: directory + delimiter + process.env.PATH,
-      HERDR_ENV: "1", HERDR_PANE_ID: "test:source", CALL_LOG: log, FAIL_STAGE: "", SPLIT_RESPONSE: "", ...overrides
+      HERDR_ENV: "1", HERDR_PANE_ID: "test:source", CALL_LOG: log, FAIL_STAGE: "", SPLIT_RESPONSE: "",
+      JANUS_COORDINATE_SOCKET: "", JANUS_COORDINATOR_ID: "", ...overrides
     },
   });
   const calls = readFileSync(log, "utf8").trim().split("\n").filter(Boolean).map(line => JSON.parse(line));
@@ -63,6 +64,13 @@ assert.ok(success.calls[2][3].includes("verify any recorded workflow authorizati
 assert.ok(!success.calls[2][3].includes("unless the user explicitly asks"));
 assert.deepEqual(success.calls[3], ["agent", "focus", record.destinationName]);
 assert.deepEqual(success.calls[4], ["pane", "close", "test:source"]);
+
+const coordinator = launch({ JANUS_COORDINATE_SOCKET: "/tmp/janus.sock", JANUS_COORDINATOR_ID: "a1b2c3" });
+assert.equal(coordinator.status, 0, coordinator.stderr);
+assert.deepEqual(coordinator.calls[0], [
+  "pane", "split", "--pane", "test:source", "--direction", "right", "--cwd", directory, "--no-focus",
+  "--env", "JANUS_COORDINATE_SOCKET=/tmp/janus.sock", "--env", "JANUS_COORDINATOR_ID=a1b2c3",
+]);
 
 for (const stage of ["split", "start", "prompt", "focus", "close"]) {
   const failure = launch({ FAIL_STAGE: stage });
@@ -93,4 +101,4 @@ for (const name of [null, "", "   "]) {
   assert.equal(failure.status, 1);
   assert.equal(failure.calls.length, 0);
 }
-console.log("PASS: session display name, right-pane transfer, path-only prompt, private packet, source-only final close, and 15 failure cases");
+console.log("PASS: session display name, right-pane transfer, path-only prompt, private packet, source-only final close, Janus identity carried to the destination, and 15 failure cases");
