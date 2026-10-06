@@ -77,7 +77,7 @@ Trigger: a recorded decision could recur, or the user states a general rule ("wh
 2. Append the proposal as one short paragraph to the end of the next reply. It must not interrupt the user's current question or block the work.
 3. On approval of the wording (corrections included), allocate the next `P-NNN` from `brain/Precedents.md`, write the entry under `## Active` with `approved:` today, and log it as a decision line.
 4. On refusal, log a `not a precedent` line with the reason. Unanswered proposals stay unwritten; do not repeat them in the same session.
-5. In a dream run, the dream PR is the proposal: write the entry under `## Active` with `approved: YYYY-MM-DD (dream PR)` and list it in the PR for Greyy's judgment. Merging the PR approves the wording; closing it declines it (`dream` skill).
+5. In a dream run, the dream PR is the proposal: write the entry under `## Active` with `approved: YYYY-MM-DD (dream PR)` and list it in the PR for Greyy's judgment. Merging the PR approves the wording; closing it declines it (`tools/dream/prompt.md`).
 
 ### Refine or retire
 

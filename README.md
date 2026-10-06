@@ -48,8 +48,7 @@ There are no daily rituals to remember. Janus recognizes what the conversation n
 
 - `tickets` captures, starts, checkpoints, and replans managed work;
 - `projects` creates, updates, reviews, and closes projects from ticket evidence;
-- `decisions` records my decisions, proposes precedents, and maintains grants;
-- `dream` runs overnight only, through `tools/dream/dream.sh`.
+- `decisions` records my decisions, proposes precedents, and maintains grants.
 
 Each active ticket says whether it needs me: `autonomous` while an agent drives it, `human_required` while it waits on my decision, review, or hands-on work. At most two tickets need my attention at once; autonomous work is not limited.
 
@@ -75,7 +74,7 @@ janus/
 ├── README.md
 ├── commands.md             # reference for package.json scripts
 ├── docs/                   # how tickets, projects, decisions, and Dream work
-├── .agents/skills/         # tickets, projects, decisions, dream
+├── .agents/skills/         # tickets, projects, decisions
 ├── .pi/extensions/         # /coordinate mode and the Dream catch-up
 ├── coordinator/            # the coordinator Janus spawns per request
 ├── brain/
@@ -90,7 +89,7 @@ janus/
 │   └── journal.md
 └── tools/
     ├── brain/              # calendar and session-transcript scripts
-    └── dream/              # the nightly Dream runner and its launchd installer
+    └── dream/              # the nightly Dream runner, its prompt, and its launchd installer
 ```
 
 The journal template contains:

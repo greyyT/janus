@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 # Janus Dream. Moves the uncommitted changes out of the main checkout into a
 # worktree on a dream/* branch, lets pi consolidate them with the days' Janus
-# conversations (.agents/skills/dream/SKILL.md), then opens or updates the dream PR.
+# conversations, then opens or updates the dream PR.
 #
-#   dream.sh            dream now when due (launchd runs this at 03:00)
-#   dream.sh catch-up   report an unseen failure, or when due, move the changes
-#                       and finish in the background (run before Greyy's prompts)
+#   dream.sh                  dream now when due (launchd runs this at 03:00)
+#   dream.sh --prompt PATH    the same, with another prompt file (default
+#                             tools/dream/prompt.md); relative to the Janus root
+#   dream.sh catch-up         report an unseen failure, or when due, move the changes
+#                             and finish in the background (run before Greyy's prompts)
+#
+# The prompt file may use {{days}}, {{root}}, {{changes_commit}}, {{pr_body}},
+# and {{previous_pr_body}}; it is read before the changes move, so an
+# uncommitted variant works.
 #
 # A day is due once it is past 03:00 the next morning and .janus/dream/last
 # (the last day dreamed) is older. Authority: "Dream commits and opens its PR"
@@ -20,6 +26,13 @@ RUN_ENV="$STATE/run.env"
 FAILED="$STATE/failed"
 LOG="$STATE/dream.log"
 MODE="${1:-}"
+PROMPT="$ROOT/tools/dream/prompt.md"
+if [[ "$MODE" == --prompt ]]; then
+  PROMPT="${2:?--prompt needs a path}"
+  [[ "$PROMPT" == /* ]] || PROMPT="$ROOT/$PROMPT"
+  MODE=""
+fi
+[[ -f "$PROMPT" ]] || { echo "no prompt file at $PROMPT" >&2; exit 2; }
 mkdir -p "$STATE"
 cd "$ROOT"
 # Tool output goes to the log; messages meant for Greyy use fd 3 (out) and 4 (err).
@@ -70,6 +83,7 @@ prepare() {
     exit 0
   fi
   [[ "$(git symbolic-ref --short -q HEAD)" == main ]] || fail "Dream through $target postponed: the Janus checkout is not on main."
+  cp "$PROMPT" "$STATE/prompt.md"
 
   local days=() has_sessions=0 sessions
   day=${last:+$(next_day "$last")}
@@ -116,10 +130,10 @@ prepare() {
   fi
 
   {
-    printf 'target=%q\nbranch=%q\nis_rolling=%q\nworktree=%q\nday_commit=%q\n' "$target" "$branch" "$is_rolling" "$worktree" "$day_commit"
+    printf 'target=%q\nbranch=%q\nis_rolling=%q\nworktree=%q\nday_commit=%q\nprompt_label=%q\n' "$target" "$branch" "$is_rolling" "$worktree" "$day_commit" "${PROMPT#"$ROOT/"}"
     printf 'days=(%s)\n' "${days[*]}"
   } >"$RUN_ENV"
-  log "prepared $branch for ${days[*]}"
+  log "prepared $branch for ${days[*]} with ${PROMPT#"$ROOT/"}"
 }
 
 # Before anything is pushed: returns the day's changes to the main checkout,
@@ -152,16 +166,18 @@ run() {
   rm -f "$body" "$previous"
   if (( is_rolling )); then gh pr view "$branch" --json body --jq .body >"$previous" || restore "cannot read the open dream PR"; fi
 
-  local prompt="Dream for Janus. Read .agents/skills/dream/SKILL.md and follow it.
-- Days: ${days[*]}
-- Main checkout, where pnpm brain:* commands run: $ROOT
-- Commit holding the uncommitted changes: ${day_commit:-none}
-- Write the PR body to: $body"
-  if (( is_rolling )); then prompt+="
-- The dream PR is still open; carry its body forward: $previous"; fi
+  local template prompt previous_text=none
+  (( is_rolling )) && previous_text=$previous
+  template=$(<"$STATE/prompt.md")
+  prompt=${template//'{{days}}'/"${days[*]}"}
+  prompt=${prompt//'{{root}}'/"$ROOT"}
+  prompt=${prompt//'{{changes_commit}}'/"${day_commit:-none}"}
+  prompt=${prompt//'{{pr_body}}'/"$body"}
+  prompt=${prompt//'{{previous_pr_body}}'/"$previous_text"}
 
   (cd "$worktree" && JANUS_DREAM=1 pi -p --no-session "$prompt") || restore "pi exited with an error"
   [[ -s "$body" ]] || restore "no PR body written"
+  printf '\n_Prompt: `%s`_\n' "$prompt_label" >>"$body"
 
   git -C "$worktree" add -A
   git -C "$worktree" diff --cached --quiet || git -C "$worktree" commit -q -m "dream: ${days[*]}" || restore "cannot commit Dream's changes"
@@ -206,7 +222,7 @@ case "$MODE" in
     run
     ;;
   *)
-    echo "usage: dream.sh [catch-up]" >&4
+    echo "usage: dream.sh [--prompt PATH | catch-up]" >&4
     exit 2
     ;;
 esac

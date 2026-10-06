@@ -18,7 +18,7 @@ pnpm <script> -- <variables>
 | `brain:calendar:add` | `tsx tools/brain/calendar-add.ts` | `--url URL`, `--name TEXT`, `--timezone TZ`, `--json` |
 | `brain:sessions` | `tsx tools/brain/sessions.ts` | `--date YYYY-MM-DD`, `--json` |
 | `brain:transcript` | `tsx tools/brain/transcript.ts` | `PATH`, `--raw` |
-| `dream` | `tools/dream/dream.sh` | `catch-up` (positional, no `--`) |
+| `dream` | `tools/dream/dream.sh` | `--prompt PATH` or `catch-up` (no `--`) |
 | `dream:install` | `tools/dream/install.sh` | none |
 | `test` | `vitest run` | Janus defines none; pass Vitest args after `--`. |
 
@@ -61,6 +61,7 @@ pnpm <script> -- <variables>
 ### `dream`
 
 - Without arguments: dream now if a day is due; this is what launchd runs at 03:00. Run it as `pnpm dream`.
+- `--prompt PATH`: the same with another prompt file instead of `tools/dream/prompt.md`; a relative `PATH` is resolved from the Janus root. Run it as `pnpm dream --prompt PATH`.
 - `catch-up`: report an unseen failed dream, or when a day is due, move the uncommitted changes and finish in the background. Run by `.pi/extensions/dream` before each prompt; pass it as `pnpm dream catch-up`.
 - Writes state and logs to `.janus/dream/`. See `docs/dream.md`.
 

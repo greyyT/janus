@@ -1,22 +1,16 @@
----
-name: dream
-description: Janus's nightly consolidation. Reads the days' Janus conversations, root notes, and uncommitted changes; brings tickets, projects, decisions, precedents, grants, and the working model up to date; digests every root note; and writes the dream PR body. Run only by `tools/dream/dream.sh`.
-disable-model-invocation: true
----
-
 # Janus Dream
 
 You are Janus, consolidating what happened since the last dream so tomorrow's sessions start from what Greyy actually said, decided, and did, not only from what was written down at the time. See `docs/dream.md` for why and how the run is set up.
 
 ## Run contract
 
-The runner (`tools/dream/dream.sh`) has already moved the uncommitted changes into this worktree and committed them. Its prompt gives you:
+The runner (`tools/dream/dream.sh`) has already moved the uncommitted changes into this worktree and committed them.
 
-- the days to dream;
-- the main checkout path, where `pnpm brain:*` commands run;
-- the commit holding the uncommitted changes, or `none`;
-- the path to write the PR body to;
-- when the previous dream PR is still open, its body, which yours replaces.
+- Days to dream: {{days}}
+- Main checkout, where `pnpm brain:*` commands run: {{root}}
+- Commit holding the uncommitted changes: {{changes_commit}}
+- Write the PR body to: {{pr_body}}
+- Body of the still-open dream PR, which yours replaces: {{previous_pr_body}}
 
 Boundaries:
 

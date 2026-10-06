@@ -2,7 +2,7 @@
 
 Dream is Janus's nightly consolidation. During the day Janus records what it notices at the moment: decision lines, ticket checkpoints, project updates, root notes. Some things only show up across a whole day: a preference stated in passing, the same correction made twice, a plan that does not match how Greyy actually works, a root note that never got promoted. Dream reads the day back and brings Janus's state up to date, then hands every change to Greyy as one pull request.
 
-The procedure Janus follows lives in `.agents/skills/dream/SKILL.md`. This document explains the setup around it.
+The instructions Janus follows during a run are the prompt `tools/dream/prompt.md`. This document explains the setup around it.
 
 ## When it runs
 
@@ -31,7 +31,7 @@ flowchart TD
   N -- yes --> M["stash the uncommitted changes; fast-forward main"]
   M --> W["worktree on dream/YYYY-MM-DD (or the open dream PR's branch)"]
   W --> C["commit: janus: changes through YYYY-MM-DD"]
-  C --> P["pi -p --no-session: dream skill edits the worktree and writes the PR body"]
+  C --> P["pi -p --no-session with tools/dream/prompt.md: edits the worktree and writes the PR body"]
   P --> K["commit: dream: days"]
   K --> R["push; open or update the PR; remove the worktree and local branch"]
 ```
@@ -45,6 +45,12 @@ flowchart TD
 Through the skills that own each record: tickets, projects, decision lines, precedents, grants, and `brain/Working Model.md`, the page of Janus's beliefs about how Greyy works. Every root note leaves the root: promoted and archived, archived, or deleted.
 
 Merging is approval. Anything a skill would normally propose and wait for, such as a precedent's wording, goes into the PR under **Needs your judgment**. The PR body describes every change, why, and its evidence, so it can be judged without opening files.
+
+## The prompt
+
+`tools/dream/prompt.md` is the whole instruction set: what to read, what to look for, where each finding goes, how to digest root notes, and the PR body format. The runner fills in `{{days}}`, `{{root}}`, `{{changes_commit}}`, `{{pr_body}}`, and `{{previous_pr_body}}` (`none` when no dream PR is open), then passes it to `pi -p`.
+
+To try a variant, keep a copy in `.janus/dream/prompts/` (gitignored), edit it, and run `pnpm dream --prompt .janus/dream/prompts/<name>.md`. The runner reads the file before moving the changes. A variant anywhere else in the checkout is an uncommitted change like any other: it moves into the PR, and in the root Dream would digest it as a note. The PR body ends with the prompt file it was written with, so variants can be compared PR by PR. Scheduled runs and the catch-up always use `tools/dream/prompt.md`.
 
 ## Authority
 
