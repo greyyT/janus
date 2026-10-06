@@ -4,14 +4,16 @@
 # conversations, then opens or updates the dream PR.
 #
 #   dream.sh                  dream now when due (launchd runs this at 03:00)
-#   dream.sh --prompt PATH    the same, with another prompt file (default
-#                             tools/dream/prompt.md); relative to the Janus root
 #   dream.sh catch-up         report an unseen failure, or when due, move the changes
 #                             and finish in the background (run before Greyy's prompts)
+#   dream.sh --dry-run        dream the latest day on a copy of the uncommitted changes;
+#                             write the PR body and Dream's diff under .janus/dream/dry-run/,
+#                             then discard the worktree: nothing moves, commits, or pushes
+#   --prompt PATH             with the default mode or --dry-run: another prompt file
+#                             instead of tools/dream/prompt.md, relative to the Janus root
 #
 # The prompt file may use {{days}}, {{root}}, {{changes_commit}}, {{pr_body}},
-# and {{previous_pr_body}}; it is read before the changes move, so an
-# uncommitted variant works.
+# and {{previous_pr_body}}; it is read before the changes move.
 #
 # A day is due once it is past 03:00 the next morning and .janus/dream/last
 # (the last day dreamed) is older. Authority: "Dream commits and opens its PR"
@@ -25,13 +27,17 @@ LOCK="$STATE/lock"
 RUN_ENV="$STATE/run.env"
 FAILED="$STATE/failed"
 LOG="$STATE/dream.log"
-MODE="${1:-}"
+MODE=""
 PROMPT="$ROOT/tools/dream/prompt.md"
-if [[ "$MODE" == --prompt ]]; then
-  PROMPT="${2:?--prompt needs a path}"
-  [[ "$PROMPT" == /* ]] || PROMPT="$ROOT/$PROMPT"
-  MODE=""
-fi
+while (( $# )); do
+  case "$1" in
+    --prompt) PROMPT="${2:?--prompt needs a path}"; shift 2 ;;
+    --dry-run) MODE=dry-run; shift ;;
+    catch-up | run) MODE=$1; shift ;;
+    *) echo "usage: dream.sh [catch-up | [--dry-run] [--prompt PATH]]" >&2; exit 2 ;;
+  esac
+done
+[[ "$PROMPT" == /* ]] || PROMPT="$ROOT/$PROMPT"
 [[ -f "$PROMPT" ]] || { echo "no prompt file at $PROMPT" >&2; exit 2; }
 mkdir -p "$STATE"
 cd "$ROOT"
@@ -45,7 +51,7 @@ dream_target() { date -v-3H -v-1d +%F; }
 # Greyy sees a catch-up failure at once; any other failure on his next prompt.
 fail() {
   log "$1"
-  if [[ "$MODE" == catch-up ]]; then echo "$1 See $LOG." >&4; else echo "$1 See $LOG." >"$FAILED"; fi
+  if [[ "$MODE" == catch-up || "$MODE" == dry-run ]]; then echo "$1 See $LOG." >&4; else echo "$1 See $LOG." >"$FAILED"; fi
   exit 1
 }
 
@@ -55,11 +61,24 @@ acquire_lock() {
   if ! mkdir "$LOCK" 2>/dev/null; then
     local holder
     holder=$(cat "$LOCK/pid" 2>/dev/null || true)
-    if [[ -n "$holder" ]] && kill -0 "$holder" 2>/dev/null; then exit 0; fi
+    if [[ -n "$holder" ]] && kill -0 "$holder" 2>/dev/null; then
+      [[ "$MODE" == dry-run ]] && echo "A dream is already running." >&4
+      exit 0
+    fi
     rm -rf "$LOCK" && mkdir "$LOCK"
   fi
   echo $$ >"$LOCK/pid"
   trap release_lock EXIT
+}
+
+render_prompt() { # template days changes_commit pr_body previous_pr_body
+  local prompt
+  prompt=$(<"$1")
+  prompt=${prompt//'{{days}}'/"$2"}
+  prompt=${prompt//'{{root}}'/"$ROOT"}
+  prompt=${prompt//'{{changes_commit}}'/"$3"}
+  prompt=${prompt//'{{pr_body}}'/"$4"}
+  printf '%s' "${prompt//'{{previous_pr_body}}'/"$5"}"
 }
 
 # Before the day commit exists: returns the moved changes to the main checkout.
@@ -166,14 +185,9 @@ run() {
   rm -f "$body" "$previous"
   if (( is_rolling )); then gh pr view "$branch" --json body --jq .body >"$previous" || restore "cannot read the open dream PR"; fi
 
-  local template prompt previous_text=none
+  local prompt previous_text=none
   (( is_rolling )) && previous_text=$previous
-  template=$(<"$STATE/prompt.md")
-  prompt=${template//'{{days}}'/"${days[*]}"}
-  prompt=${prompt//'{{root}}'/"$ROOT"}
-  prompt=${prompt//'{{changes_commit}}'/"${day_commit:-none}"}
-  prompt=${prompt//'{{pr_body}}'/"$body"}
-  prompt=${prompt//'{{previous_pr_body}}'/"$previous_text"}
+  prompt=$(render_prompt "$STATE/prompt.md" "${days[*]}" "${day_commit:-none}" "$body" "$previous_text")
 
   (cd "$worktree" && JANUS_DREAM=1 pi -p --no-session "$prompt") || restore "pi exited with an error"
   [[ -s "$body" ]] || restore "no PR body written"
@@ -200,6 +214,34 @@ run() {
   log "dreamed ${days[*]} on $branch"
 }
 
+# Dreams the latest day on a throwaway worktree holding a copy of the
+# uncommitted changes. The checkout, `.janus/dream/last`, and GitHub stay untouched.
+dry_run() {
+  acquire_lock
+  target=$(dream_target)
+  local out changes=none prompt
+  # Global: the EXIT trap removes it after this function returns.
+  dry_worktree="${TMPDIR:-/tmp}/janus-dream-dry-$$"
+  out="$STATE/dry-run/$(date +%Y%m%d-%H%M%S)-$(basename "$PROMPT" .md)"
+  mkdir -p "$out"
+  git worktree add -q --detach "$dry_worktree" HEAD
+  trap 'git worktree remove --force "$dry_worktree"; release_lock' EXIT
+  if ! git diff --quiet HEAD; then git diff --binary HEAD | git -C "$dry_worktree" apply --binary; fi
+  git ls-files -z -o --exclude-standard | tar --null -T - -cf - | tar -xf - -C "$dry_worktree"
+  git -C "$dry_worktree" add -A
+  if ! git -C "$dry_worktree" diff --cached --quiet; then
+    git -C "$dry_worktree" commit -q -m "janus: changes through $target (dry run)"
+    changes=$(git -C "$dry_worktree" rev-parse HEAD)
+  fi
+
+  prompt=$(render_prompt "$PROMPT" "$target" "$changes" "$out/pr-body.md" none)
+  (cd "$dry_worktree" && JANUS_DREAM=1 pi -p --no-session "$prompt") || fail "Dry run for $target failed: pi exited with an error."
+  git -C "$dry_worktree" add -A
+  git -C "$dry_worktree" diff --cached >"$out/dream.diff"
+  log "dry run for $target with ${PROMPT#"$ROOT/"} written to $out"
+  echo "Dry run for $target with ${PROMPT#"$ROOT/"}: $out/pr-body.md and $out/dream.diff" >&3
+}
+
 case "$MODE" in
   "")
     prepare
@@ -221,8 +263,7 @@ case "$MODE" in
     trap release_lock EXIT
     run
     ;;
-  *)
-    echo "usage: dream.sh [--prompt PATH | catch-up]" >&4
-    exit 2
+  dry-run)
+    dry_run
     ;;
 esac

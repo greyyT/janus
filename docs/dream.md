@@ -50,7 +50,11 @@ Merging is approval. Anything a skill would normally propose and wait for, such 
 
 `tools/dream/prompt.md` is the whole instruction set: what to read, what to look for, where each finding goes, how to digest root notes, and the PR body format. The runner fills in `{{days}}`, `{{root}}`, `{{changes_commit}}`, `{{pr_body}}`, and `{{previous_pr_body}}` (`none` when no dream PR is open), then passes it to `pi -p`.
 
-To try a variant, keep a copy in `.janus/dream/prompts/` (gitignored), edit it, and run `pnpm dream --prompt .janus/dream/prompts/<name>.md`. The runner reads the file before moving the changes. A variant anywhere else in the checkout is an uncommitted change like any other: it moves into the PR, and in the root Dream would digest it as a note. The PR body ends with the prompt file it was written with, so variants can be compared PR by PR. Scheduled runs and the catch-up always use `tools/dream/prompt.md`.
+To try a variant, keep a copy in `.janus/dream/prompts/` (gitignored) and edit it. A variant anywhere else in the checkout is an uncommitted change like any other: a real run moves it into the PR, and in the root Dream would digest it as a note.
+
+Compare variants with dry runs: `pnpm dream --dry-run --prompt .janus/dream/prompts/<name>.md` (omit `--prompt` for the default). A dry run dreams the latest day on a throwaway worktree holding a copy of the uncommitted changes and writes `pr-body.md` and `dream.diff` (Dream's edits) to `.janus/dream/dry-run/<time>-<prompt>/`. It leaves the checkout, `.janus/dream/last`, and GitHub untouched, so every variant can run against the same day.
+
+A real run with `pnpm dream --prompt <path>` behaves like the 03:00 run with that prompt, and its PR body ends with the prompt file. Scheduled runs and the catch-up always use `tools/dream/prompt.md`.
 
 ## Authority
 
