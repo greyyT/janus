@@ -14,11 +14,16 @@ A day is due once it is past 03:00 the next morning and `.janus/dream/last`, the
 
 ## Inputs
 
-| Input | What it is | Weight |
-| --- | --- | --- |
-| Uncommitted changes in the Janus checkout | What Janus and Greyy recorded at the time | Highest |
-| Root notes | What Greyy chose to write down | Intentional, unverified |
-| Janus conversations | `pnpm brain:sessions` and `pnpm brain:transcript` | Observed |
+Before the model starts, the runner gathers every input into one Markdown file with `pnpm dream:input` and gives the model its path:
+
+| Input | What it is |
+| --- | --- |
+| Uncommitted changes | The commit holding them, as stat and patch: what Janus and Greyy recorded at the time |
+| Root notes | Each note in the root with its content; notes kept earlier and unchanged are only named |
+| Janus conversations | Every session of the days, rendered like `pnpm brain:transcript`, with its path |
+| Earlier sightings | `## Noticed, not changed` from dream PRs of the previous 30 days |
+
+Run `pnpm dream:input` yourself to see what Dream would read. Which input wins depends on the question; see What it changes.
 
 Coordinate mode is excluded: `/coordinate` marks the transcript, and the session tools ignore everything after the mark. Its decisions already reach Dream as decision lines and project updates in the changed files. Coordinator sessions run in `coordinator/` and are never listed.
 
@@ -52,11 +57,11 @@ Merging is approval. When a skill would normally propose and wait for Greyy, suc
 
 ## The prompt
 
-`tools/dream/prompt.md` is the whole instruction set: what to read, which evidence wins, what to look for, where each finding goes, how to handle root notes, and the PR body format. The runner fills in `{{days}}`, `{{root}}`, `{{changes_commit}}`, `{{branch}}`, `{{pr_body}}`, `{{kept_notes}}`, and `{{previous_pr_body}}` (`none` when no dream PR is open), then passes it to `pi -p`.
+`tools/dream/prompt.md` is the whole instruction set: which evidence wins, what to look for, where each finding goes, how to handle root notes, and the PR body format. The runner fills in `{{days}}`, `{{root}}`, `{{input}}`, `{{changes_commit}}`, `{{branch}}`, `{{pr_body}}`, `{{kept_notes}}`, and `{{previous_pr_body}}` (`none` when no dream PR is open), then passes it to `pi -p`.
 
 To try a variant, keep a copy in `.janus/dream/prompts/` (gitignored) and edit it. A variant anywhere else in the checkout is an uncommitted change like any other: a real run moves it into the PR, and in the root Dream would digest it as a note.
 
-Compare variants with dry runs: `pnpm dream --dry-run --prompt .janus/dream/prompts/<name>.md` (omit `--prompt` for the default). A dry run dreams the latest day on a throwaway worktree holding a copy of the uncommitted changes and writes `pr-body.md` and `dream.diff` (Dream's edits) to `.janus/dream/dry-run/<time>-<prompt>/`. It leaves the checkout, `.janus/dream/last`, and GitHub untouched, so every variant can run against the same day.
+Compare variants with dry runs: `pnpm dream --dry-run --prompt .janus/dream/prompts/<name>.md` (omit `--prompt` for the default). A dry run dreams the latest day on a throwaway worktree holding a copy of the uncommitted changes and writes `input.md`, `pr-body.md`, `kept-notes.txt`, and `dream.diff` (Dream's edits) to `.janus/dream/dry-run/<time>-<prompt>/`. It leaves the checkout, `.janus/dream/last`, and GitHub untouched, so every variant can run against the same day.
 
 A real run with `pnpm dream --prompt <path>` behaves like the 03:00 run with that prompt, and its PR body ends with the prompt file. Scheduled runs and the catch-up always use `tools/dream/prompt.md`.
 

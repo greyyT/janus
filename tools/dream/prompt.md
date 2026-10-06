@@ -8,6 +8,7 @@ The runner (`tools/dream/dream.sh`) has already moved the uncommitted changes in
 
 - Days to dream: {{days}}
 - Main checkout, where `pnpm brain:*` commands run: {{root}}
+- Your inputs, gathered by `pnpm dream:input`: {{input}}
 - Commit holding the uncommitted changes: {{changes_commit}}
 - Dream branch: {{branch}}
 - Write the PR body to: {{pr_body}}
@@ -31,17 +32,14 @@ When a skill requires Greyy's approval before a change, write the exact proposed
 
 ## Inputs
 
-- **The uncommitted changes**: `git show --stat <commit>`, then the diffs that matter: decision lines, ticket logs, project updates, journal entries, root notes.
-- **Root notes**: Markdown files directly in the root of this worktree, except protected files (`PROTECTED_ROOT_FILES` in `tools/brain/lib/classify.ts`). Greyy wrote them on purpose; they are intentional, unverified captures. Notes Dream kept earlier that Greyy has not changed since are not here; they remain in `{{root}}`.
-- **Conversations**: for each day, `pnpm --dir {{root}} brain:sessions -- --date YYYY-MM-DD --json`, then `pnpm --dir {{root}} brain:transcript -- <path>` for each session. Coordinate mode is already cut out. Use `--raw` only when a hidden tool result decides a claim.
-- **Earlier sightings**: the `## Noticed, not changed` sections of dream PRs from the 30 days before the first day:
+Read {{input}} in full before anything else. It holds:
 
-  ```sh
-  gh pr list --state all --limit 100 --json headRefName,url,createdAt,state,body \
-    --jq '[.[] | select(.headRefName | startswith("dream/")) | {url, createdAt, state, noticed: ([.body | split("\n## ")[] | select(startswith("Noticed, not changed"))] | first // "")}]'
-  ```
+- **Uncommitted changes**: the commit holding them, as stat and patch: decision lines, ticket logs, project updates, journal entries, root notes.
+- **Root notes**: each note in this worktree's root with its content. Greyy wrote them on purpose; they are intentional, unverified captures. Notes Dream kept earlier that Greyy has not changed since are only named; they remain in `{{root}}`.
+- **Conversations**: every Janus session of the days, as `user:` and `janus:` turns with one line per tool call, and the transcript path. Coordinate mode is already cut out. When a hidden tool result decides a claim, read it with `pnpm --dir {{root}} brain:transcript -- <path> --raw`.
+- **Earlier sightings**: the `## Noticed, not changed` sections of dream PRs from the 30 days before the first day.
 
-  Also search `Decision (user):` lines across `tickets/` and `journal/`, and earlier transcripts with `brain:sessions --date`, when you need to know whether something happened before.
+To check whether something happened before beyond that, search `Decision (user):` lines across `tickets/` and `journal/`, or read earlier days with `pnpm --dir {{root}} dream:input -- --days YYYY-MM-DD`.
 
 Then read the state you may change: `brain/HOME.md`, `tickets/BOARD.md` and the tickets the inputs touch, the affected project pages, `brain/Precedents.md`, `brain/Grants.md`, and `brain/Working Model.md`.
 

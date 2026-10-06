@@ -20,6 +20,7 @@ pnpm <script> -- <variables>
 | `brain:transcript` | `tsx tools/brain/transcript.ts` | `PATH`, `--raw` |
 | `dream` | `tools/dream/dream.sh` | `catch-up`, `--dry-run`, `--prompt PATH` (no `--`) |
 | `dream:install` | `tools/dream/install.sh` | none |
+| `dream:input` | `tsx tools/dream/input.ts` | `--days "YYYY-MM-DD …"`, `--changes COMMIT`, `--notes-dir PATH` |
 | `test` | `vitest run` | Janus defines none; pass Vitest args after `--`. |
 
 ## Variables
@@ -62,10 +63,18 @@ pnpm <script> -- <variables>
 
 - Without arguments: dream now if a day is due; this is what launchd runs at 03:00. Run it as `pnpm dream`.
 - `--prompt PATH`: use another prompt file instead of `tools/dream/prompt.md`, with the default mode or `--dry-run`; a relative `PATH` is resolved from the Janus root. Run it as `pnpm dream --prompt PATH`.
-- `--dry-run`: dream the latest day on a throwaway worktree holding a copy of the uncommitted changes; writes `pr-body.md` and `dream.diff` to `.janus/dream/dry-run/<time>-<prompt>/` and prints the paths. Nothing moves, commits, or pushes, and `.janus/dream/last` is unchanged.
+- `--dry-run`: dream the latest day on a throwaway worktree holding a copy of the uncommitted changes; writes `input.md`, `pr-body.md`, `kept-notes.txt`, and `dream.diff` to `.janus/dream/dry-run/<time>-<prompt>/` and prints the paths. Nothing moves, commits, or pushes, and `.janus/dream/last` is unchanged.
 - `catch-up`: report an unseen failed dream, or when a day is due, move the uncommitted changes and finish in the background. Run by `.pi/extensions/dream` before each prompt; pass it as `pnpm dream catch-up`.
 - Writes state and logs to `.janus/dream/`. See `docs/dream.md`.
 
 ### `dream:install`
 
 - Installs or reinstalls the `com.janus.dream` launchd job for this checkout, keeping the current `PATH`.
+
+### `dream:input`
+
+- Prints, as one Markdown document, everything a dream reads: the uncommitted changes, root notes, the days' Janus conversations, and `## Noticed, not changed` from dream PRs of the previous 30 days. The runner writes it to a file for the model.
+- `--days "YYYY-MM-DD …"`: days to gather, separated by spaces or commas. Default: the latest day a dream covers (yesterday, or the day before until 03:00).
+- `--changes COMMIT`: commit holding the uncommitted changes, shown as stat and patch. Default: none.
+- `--notes-dir PATH`: directory whose root notes are read. Default: the Janus root. Notes Dream kept earlier and that are unchanged (`.janus/dream/kept`) are only named.
+- Dream PRs come from `gh pr list`; when it fails, the document says why.

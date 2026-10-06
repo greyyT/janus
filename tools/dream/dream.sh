@@ -13,7 +13,7 @@
 #                             instead of tools/dream/prompt.md, relative to the Janus root
 #
 # The prompt file may use {{days}}, {{root}}, {{changes_commit}}, {{branch}},
-# {{pr_body}}, {{kept_notes}}, and {{previous_pr_body}}; it is read before the
+# {{input}}, {{pr_body}}, {{kept_notes}}, and {{previous_pr_body}}; it is read before the
 # changes move.
 #
 # A day is due once it is past 03:00 the next morning and .janus/dream/last
@@ -75,7 +75,7 @@ acquire_lock() {
   trap release_lock EXIT
 }
 
-render_prompt() { # template days changes_commit pr_body previous_pr_body branch kept_notes
+render_prompt() { # template days changes_commit pr_body previous_pr_body branch kept_notes input
   local prompt
   prompt=$(<"$1")
   prompt=${prompt//'{{days}}'/"$2"}
@@ -84,7 +84,15 @@ render_prompt() { # template days changes_commit pr_body previous_pr_body branch
   prompt=${prompt//'{{pr_body}}'/"$4"}
   prompt=${prompt//'{{previous_pr_body}}'/"$5"}
   prompt=${prompt//'{{branch}}'/"$6"}
+  prompt=${prompt//'{{input}}'/"$8"}
   printf '%s' "${prompt//'{{kept_notes}}'/"$7"}"
+}
+
+# Writes everything Dream reads into one file: `pnpm dream:input`.
+gather_input() { # output days changes_commit notes_dir
+  local changes=()
+  [[ "$3" == none ]] || changes=(--changes "$3")
+  pnpm -s dream:input -- --days "$2" --notes-dir "$4" ${changes[@]+"${changes[@]}"} >"$1"
 }
 
 # Root notes Dream kept unresolved go back to the checkout and stay out of the
@@ -243,7 +251,8 @@ run() {
 
   local prompt previous_text=none
   (( is_rolling )) && previous_text=$previous
-  prompt=$(render_prompt "$STATE/prompt.md" "${days[*]}" "${day_commit:-none}" "$body" "$previous_text" "$branch" "$KEPT_LIST")
+  gather_input "$STATE/input.md" "${days[*]}" "${day_commit:-none}" "$worktree" || restore "cannot gather the inputs"
+  prompt=$(render_prompt "$STATE/prompt.md" "${days[*]}" "${day_commit:-none}" "$body" "$previous_text" "$branch" "$KEPT_LIST" "$STATE/input.md")
 
   (cd "$worktree" && JANUS_DREAM=1 pi -p --no-session "$prompt") || restore "pi exited with an error"
   [[ -s "$body" ]] || restore "no PR body written"
@@ -292,7 +301,8 @@ dry_run() {
     changes=$(git -C "$dry_worktree" rev-parse HEAD)
   fi
 
-  prompt=$(render_prompt "$PROMPT" "$target" "$changes" "$out/pr-body.md" none dry-run "$out/kept-notes.txt")
+  gather_input "$out/input.md" "$target" "$changes" "$dry_worktree" || fail "Dry run for $target failed: cannot gather the inputs."
+  prompt=$(render_prompt "$PROMPT" "$target" "$changes" "$out/pr-body.md" none dry-run "$out/kept-notes.txt" "$out/input.md")
   (cd "$dry_worktree" && JANUS_DREAM=1 pi -p --no-session "$prompt") || fail "Dry run for $target failed: pi exited with an error."
   git -C "$dry_worktree" add -A
   git -C "$dry_worktree" diff --cached >"$out/dream.diff"
