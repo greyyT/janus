@@ -81,6 +81,7 @@ janus/
 ├── commands.md             # reference for package.json scripts
 ├── docs/                   # how tickets, projects, decisions, and Dream work
 ├── .agents/skills/         # tickets, projects, decisions
+├── .pi/SYSTEM.md           # Janus's system prompt: role, principles, and boundaries
 ├── .pi/extensions/         # /coordinate mode, the Dream catch-up, orientation, and Telegram notifications
 ├── coordinator/            # the coordinator Janus spawns per request
 ├── brain/
