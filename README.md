@@ -54,7 +54,7 @@ Each active ticket says whether it needs me: `autonomous` while an agent drives 
 
 ## dream
 
-Every night at 03:00, Dream reads the day back: my Janus conversations, my root notes, and everything Janus changed. It brings tickets, projects, decisions, precedents, grants, and `brain/Working Model.md` (how I actually work) up to date, digests every root note, and opens one pull request whose description explains every change and its evidence. Merging is my approval. If the Mac was off or offline, Dream catches up before my next prompt. See `docs/dream.md`.
+Every night at 03:00, Dream reads the day back: my Janus conversations, my root notes, and everything Janus changed. It brings tickets, projects, decisions, precedents, grants, and `brain/Working Model.md` (how I actually work) up to date, resolves the root notes it has enough evidence for, and opens one pull request whose description explains every change and its evidence. Merging is my approval. If the Mac was off or offline, Dream catches up before my next prompt. See `docs/dream.md`.
 
 Install the nightly job once per machine with `pnpm dream:install`.
 

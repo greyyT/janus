@@ -42,13 +42,17 @@ flowchart TD
 
 ## What it changes
 
-Through the skills that own each record: tickets, projects, decision lines, precedents, grants, and `brain/Working Model.md`, the page of Janus's beliefs about how Greyy works. Every root note leaves the root: promoted and archived, archived, or deleted.
+Through the skills that own each record: tickets, projects, decision lines, precedents, grants, and `brain/Working Model.md`, the page of Janus's beliefs about how Greyy works. Which evidence wins depends on the question: Greyy's own turns for what he wants (the later explicit statement wins), the source repository for how code behaves, and the canonical Markdown for Janus's recorded state unless stronger evidence shows it was recorded wrongly.
 
-Merging is approval. Anything a skill would normally propose and wait for, such as a precedent's wording, goes into the PR under **Needs your judgment**. The PR body describes every change, why, and its evidence, so it can be judged without opening files.
+A working-model belief needs Greyy's explicit statement, or the same behaviour seen again under similar conditions. A single observation goes under **Noticed, not changed** in the PR body. Later dreams read those sections from the dream PRs of the previous 30 days to find repetitions, so the PR history is the record of earlier sightings; nothing else is stored.
+
+Every root note is considered, but not every note is resolved: Dream promotes and archives it, archives it, deletes it, or keeps it unresolved. A kept note goes back to the root, stays out of the PR, and is listed with its SHA-1 in `.janus/dream/kept`; later dreams leave it out until Greyy changes it.
+
+Merging is approval. When a skill would normally propose and wait for Greyy, such as a precedent's wording, Dream writes the exact change on its branch and lists it under **Needs your judgment**. It stays non-canonical until the merge, and closing the PR rejects it. Dream never records approval as given: a precedent says `approved: by merging dream PR <branch>`, which only becomes true on `main`. The PR body describes every change, why, and its evidence, so it can be judged without opening files.
 
 ## The prompt
 
-`tools/dream/prompt.md` is the whole instruction set: what to read, what to look for, where each finding goes, how to digest root notes, and the PR body format. The runner fills in `{{days}}`, `{{root}}`, `{{changes_commit}}`, `{{pr_body}}`, and `{{previous_pr_body}}` (`none` when no dream PR is open), then passes it to `pi -p`.
+`tools/dream/prompt.md` is the whole instruction set: what to read, which evidence wins, what to look for, where each finding goes, how to handle root notes, and the PR body format. The runner fills in `{{days}}`, `{{root}}`, `{{changes_commit}}`, `{{branch}}`, `{{pr_body}}`, `{{kept_notes}}`, and `{{previous_pr_body}}` (`none` when no dream PR is open), then passes it to `pi -p`.
 
 To try a variant, keep a copy in `.janus/dream/prompts/` (gitignored) and edit it. A variant anywhere else in the checkout is an uncommitted change like any other: a real run moves it into the PR, and in the root Dream would digest it as a note.
 

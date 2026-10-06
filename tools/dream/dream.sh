@@ -12,8 +12,9 @@
 #   --prompt PATH             with the default mode or --dry-run: another prompt file
 #                             instead of tools/dream/prompt.md, relative to the Janus root
 #
-# The prompt file may use {{days}}, {{root}}, {{changes_commit}}, {{pr_body}},
-# and {{previous_pr_body}}; it is read before the changes move.
+# The prompt file may use {{days}}, {{root}}, {{changes_commit}}, {{branch}},
+# {{pr_body}}, {{kept_notes}}, and {{previous_pr_body}}; it is read before the
+# changes move.
 #
 # A day is due once it is past 03:00 the next morning and .janus/dream/last
 # (the last day dreamed) is older. Authority: "Dream commits and opens its PR"
@@ -27,6 +28,9 @@ LOCK="$STATE/lock"
 RUN_ENV="$STATE/run.env"
 FAILED="$STATE/failed"
 LOG="$STATE/dream.log"
+KEPT="$STATE/kept"
+KEPT_LIST="$STATE/kept-notes.txt"
+KEPT_OUT="$STATE/kept-out"
 MODE=""
 PROMPT="$ROOT/tools/dream/prompt.md"
 while (( $# )); do
@@ -71,14 +75,63 @@ acquire_lock() {
   trap release_lock EXIT
 }
 
-render_prompt() { # template days changes_commit pr_body previous_pr_body
+render_prompt() { # template days changes_commit pr_body previous_pr_body branch kept_notes
   local prompt
   prompt=$(<"$1")
   prompt=${prompt//'{{days}}'/"$2"}
   prompt=${prompt//'{{root}}'/"$ROOT"}
   prompt=${prompt//'{{changes_commit}}'/"$3"}
   prompt=${prompt//'{{pr_body}}'/"$4"}
-  printf '%s' "${prompt//'{{previous_pr_body}}'/"$5"}"
+  prompt=${prompt//'{{previous_pr_body}}'/"$5"}
+  prompt=${prompt//'{{branch}}'/"$6"}
+  printf '%s' "${prompt//'{{kept_notes}}'/"$7"}"
+}
+
+# Root notes Dream kept unresolved go back to the checkout and stay out of the
+# PR. $KEPT lists them as "<sha1>\t<name>"; one Greyy has not changed since is
+# left out of the next dream too. Sets `pathspec` (what Dream takes) and
+# `carried` (the $KEPT lines still valid).
+changes_pathspec() {
+  pathspec=(.)
+  carried=""
+  [[ -f "$KEPT" ]] || return 0
+  local sha note
+  while IFS=$'\t' read -r sha note; do
+    if [[ -f "$note" && "$(shasum "$note" | cut -d' ' -f1)" == "$sha" ]]; then
+      pathspec+=(":(exclude,literal)$note")
+      carried+="$sha"$'\t'"$note"$'\n'
+    fi
+  done <"$KEPT"
+}
+
+# After the model run: moves the notes Dream listed as kept out of the worktree,
+# so the PR leaves them out. A note already on main stays where it is.
+take_kept_notes() {
+  rm -rf "$KEPT_OUT"
+  mkdir -p "$KEPT_OUT"
+  [[ -f "$KEPT_LIST" ]] || return 0
+  local note
+  while IFS= read -r note || [[ -n "$note" ]]; do
+    if [[ "$note" == *.md && "$note" != */* && -f "$worktree/$note" ]] && ! git -C "$worktree" cat-file -e "origin/main:$note" 2>/dev/null; then
+      mv "$worktree/$note" "$KEPT_OUT/$note"
+    fi
+  done <"$KEPT_LIST"
+}
+
+# After the push: returns kept notes to the checkout and records them in $KEPT.
+return_kept_notes() {
+  local file note
+  cp "$STATE/kept.next" "$KEPT"
+  for file in "$KEPT_OUT"/*.md; do
+    [[ -e "$file" ]] || continue
+    note=$(basename "$file")
+    if [[ -e "$ROOT/$note" ]]; then
+      log "kept note $note not returned: $ROOT/$note exists; the note is in $KEPT_OUT"
+      continue
+    fi
+    mv "$file" "$ROOT/$note"
+    printf '%s\t%s\n' "$(shasum "$ROOT/$note" | cut -d' ' -f1)" "$note" >>"$KEPT"
+  done
 }
 
 # Before the day commit exists: returns the moved changes to the main checkout.
@@ -114,7 +167,9 @@ prepare() {
     day=$(next_day "$day")
   done
   local has_changes=0
-  [[ -n "$(git status --porcelain)" ]] && has_changes=1
+  changes_pathspec
+  printf '%s' "$carried" >"$STATE/kept.next"
+  [[ -n "$(git status --porcelain -- "${pathspec[@]}")" ]] && has_changes=1
   if (( !has_sessions && !has_changes )); then
     echo "$target" >"$LAST"
     log "nothing to dream through $target"
@@ -132,11 +187,11 @@ prepare() {
   local popped=0
   worktree="${TMPDIR:-/tmp}/janus-dream-$target"
   day_commit=""
-  git fetch -q origin
+  git fetch -q origin || fail "Dream through $target postponed: cannot fetch origin."
   # A closed or merged dream PR may have left a branch with this name behind.
   if (( !is_rolling )) && git rev-parse -q --verify "origin/$branch" >/dev/null; then branch+="-$(date +%H%M%S)"; fi
   git worktree prune
-  (( has_changes )) && git stash push -q -u -m "janus-dream $target"
+  (( has_changes )) && git stash push -q -u -m "janus-dream $target" -- "${pathspec[@]}"
   git merge -q --ff-only origin/main || log "main checkout not fast-forwarded to origin/main"
   if (( has_changes )); then
     git worktree add -q -B "$branch" "$worktree" "$base" || give_back "cannot create the dream worktree"
@@ -167,11 +222,12 @@ restore() {
   git worktree remove --force "$worktree"
   git branch -D -q "$branch"
   if [[ -n "$day_commit" ]]; then git stash pop -q || log "changes kept in git stash: run git stash pop"; fi
-  rm -f "$RUN_ENV"
+  rm -rf "$RUN_ENV" "$KEPT_OUT"
   fail "Dream through $target failed: $1; the uncommitted changes are back in the Janus checkout."
 }
 
 close_out() {
+  return_kept_notes
   echo "$target" >"$LAST"
   rm -f "$RUN_ENV"
   git worktree remove --force "$worktree"
@@ -182,20 +238,21 @@ run() {
   # shellcheck source=/dev/null
   source "$RUN_ENV"
   local body="$STATE/pr-body.md" previous="$STATE/previous-pr-body.md"
-  rm -f "$body" "$previous"
+  rm -f "$body" "$previous" "$KEPT_LIST"
   if (( is_rolling )); then gh pr view "$branch" --json body --jq .body >"$previous" || restore "cannot read the open dream PR"; fi
 
   local prompt previous_text=none
   (( is_rolling )) && previous_text=$previous
-  prompt=$(render_prompt "$STATE/prompt.md" "${days[*]}" "${day_commit:-none}" "$body" "$previous_text")
+  prompt=$(render_prompt "$STATE/prompt.md" "${days[*]}" "${day_commit:-none}" "$body" "$previous_text" "$branch" "$KEPT_LIST")
 
   (cd "$worktree" && JANUS_DREAM=1 pi -p --no-session "$prompt") || restore "pi exited with an error"
   [[ -s "$body" ]] || restore "no PR body written"
   printf '\n_Prompt: `%s`_\n' "$prompt_label" >>"$body"
+  take_kept_notes
 
   git -C "$worktree" add -A
   git -C "$worktree" diff --cached --quiet || git -C "$worktree" commit -q -m "dream: ${days[*]}" || restore "cannot commit Dream's changes"
-  if [[ -z "$(git -C "$worktree" rev-list origin/main..HEAD)" ]]; then
+  if (( !is_rolling )) && git -C "$worktree" diff --quiet origin/main HEAD; then
     close_out
     log "dreamed ${days[*]}; nothing changed"
     return
@@ -219,22 +276,23 @@ run() {
 dry_run() {
   acquire_lock
   target=$(dream_target)
-  local out changes=none prompt
+  local out changes=none prompt pathspec carried
   # Global: the EXIT trap removes it after this function returns.
   dry_worktree="${TMPDIR:-/tmp}/janus-dream-dry-$$"
   out="$STATE/dry-run/$(date +%Y%m%d-%H%M%S)-$(basename "$PROMPT" .md)"
   mkdir -p "$out"
   git worktree add -q --detach "$dry_worktree" HEAD
   trap 'git worktree remove --force "$dry_worktree"; release_lock' EXIT
-  if ! git diff --quiet HEAD; then git diff --binary HEAD | git -C "$dry_worktree" apply --binary; fi
-  git ls-files -z -o --exclude-standard | tar --null -T - -cf - | tar -xf - -C "$dry_worktree"
+  changes_pathspec
+  if ! git diff --quiet HEAD -- "${pathspec[@]}"; then git diff --binary HEAD -- "${pathspec[@]}" | git -C "$dry_worktree" apply --binary; fi
+  git ls-files -z -o --exclude-standard -- "${pathspec[@]}" | tar --null -T - -cf - | tar -xf - -C "$dry_worktree"
   git -C "$dry_worktree" add -A
   if ! git -C "$dry_worktree" diff --cached --quiet; then
     git -C "$dry_worktree" commit -q -m "janus: changes through $target (dry run)"
     changes=$(git -C "$dry_worktree" rev-parse HEAD)
   fi
 
-  prompt=$(render_prompt "$PROMPT" "$target" "$changes" "$out/pr-body.md" none)
+  prompt=$(render_prompt "$PROMPT" "$target" "$changes" "$out/pr-body.md" none dry-run "$out/kept-notes.txt")
   (cd "$dry_worktree" && JANUS_DREAM=1 pi -p --no-session "$prompt") || fail "Dry run for $target failed: pi exited with an error."
   git -C "$dry_worktree" add -A
   git -C "$dry_worktree" diff --cached >"$out/dream.diff"
