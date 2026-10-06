@@ -1,6 +1,6 @@
 ---
 name: tickets
-description: The Janus ticket system — how managed work is captured, started, checkpointed, and replanned on `tickets/BOARD.md`. Load whenever a conversation creates, begins, resumes, finishes, pauses, blocks, or displaces a unit of managed work, or when the user refers to a ticket by title or J-NNN.
+description: The Janus ticket system — how managed work is captured, started, and checkpointed on `tickets/BOARD.md`. Load whenever a conversation creates, begins, resumes, finishes, pauses, blocks, or displaces a unit of managed work, or when the user refers to a ticket by title or J-NNN.
 ---
 
 # Janus Tickets
@@ -13,7 +13,7 @@ Tickets are Janus's unit of managed work: one deliverable, decision, investigati
 
 - `tickets/BOARD.md` is the canonical workflow state. Each ticket appears exactly once, as a wikilink under its state section, followed by ` · J-NNN`. `active` and `verifying` entries also end with ` · autonomous` or ` · human_required`; a `human_required` entry carries one sub-bullet `- needs user: <what the user must do>`. Empty sections contain `_None._`.
 - `tickets/J-NNN-<lowercase-kebab-slug>.md` owns the ticket's contract, current checkpoint, acceptance evidence, and work log.
-- Today's `journal/YYYY-MM-DD.md` records the morning `## Dispatch`, displacements under `## Changes`, and one-line session references under `### Ticket sessions` in `## Notes`. Never copy ticket content into the journal.
+- Today's `journal/YYYY-MM-DD.md` records one-line session references under `### Ticket sessions` in `## Notes`. Never copy ticket content into the journal.
 - Project and goal pages under `brain/` own the higher-level understanding the ticket serves.
 
 ### Ticket contract
@@ -81,7 +81,6 @@ Janus proposes and waits for the user's approval before:
 
 - creating a ticket whose outcome, done condition, or scope Janus inferred;
 - marking `done` or `dropped`;
-- displacing today's protected ticket or required pulls;
 - exceeding the `ready` or `human_required` limits;
 - reopening a closed ticket.
 
@@ -91,7 +90,7 @@ Never claim progress not supported by the user or an authoritative artifact. Tre
 
 Before any phase, read `tickets/BOARD.md`, the complete ticket file, and today's journal when it exists. Read the relevant project or goal page only as far as needed to understand purpose and prior decisions. Do not reload context already read in this session.
 
-Resolve a ticket by title fragment, ID, today's protected ticket, or the most recently discussed active ticket. If resolution is ambiguous, ask one focused question.
+Resolve a ticket by title fragment, ID, or the most recently discussed active ticket. If resolution is ambiguous, ask one focused question.
 
 ## Phases
 
@@ -107,13 +106,13 @@ Trigger: the user describes work that should survive the conversation.
 3. Search the board, ticket files, and relevant project material for overlap. Extend an existing ticket instead of duplicating it.
 4. Preview the contract when Janus inferred material parts of it; write directly when the user supplied it.
 5. Allocate the ID immediately before writing: scan `tickets/` and `tickets/BOARD.md` for the highest existing `J-NNN`, and take the next number, padded to three digits. Never reuse an ID. Stop rather than overwrite an existing path.
-6. Write the ticket file with a dated creation work-log entry, and add it under `## Ready` or `## Waiting` on the board. Capture never creates an `active` ticket and never adds to today's dispatch unless the user asks.
+6. Write the ticket file with a dated creation work-log entry, and add it under `## Ready` or `## Waiting` on the board. Capture never creates an `active` ticket.
 
 ### Start
 
-Trigger: the user begins or resumes work on a ticket, or asks what to work on and a protected ticket exists.
+Trigger: the user begins or resumes work on a ticket, or asks what to work on.
 
-1. Preconditions: `waiting` cannot start until its blocker resolves; if starting would displace the protected ticket or required pulls, run Replan first.
+1. Preconditions: `waiting` cannot start until its blocker resolves. When the user asks what to work on, recommend one ticket, not a menu: a `human_required` ticket first, then `ready` work serving an active goal or project, weighed against `brain/Working Model.md`. Start it once the user agrees.
 2. Move `ready` → `active` on the board. Do not duplicate entries for `active` or `verifying`. Set `execution`: `human_required` when the user works it themselves, `autonomous` when Janus hands it to a coordinator.
 3. Brief from Janus context only — do not inspect the source repository during the briefing itself. In natural language:
    - the immediate purpose and the live question that matters now;
@@ -144,25 +143,6 @@ When the trigger is implicit, propose the checkpoint in one or two lines rather 
    - append a one-line title-and-ID reference under `### Ticket sessions` in today's journal.
 3. For a no-progress session, record the blocker or reason and a trustworthy next move. No achievement language.
 4. When the ticket names a project, propagate to it through the projects skill: if the checkpoint revealed an architectural constraint, new dependency, invalid assumption, milestone progress, new risk, decision, or direction change, update the project page. Routine progress does not touch the project.
-
-### Replan
-
-Trigger: interruption, urgency, discovery, or a decision changes the day's selected work.
-
-1. Resolve the displacement:
-
-   ```md
-   - displaced: Title (J-NNN)
-   - reason: concrete urgency, new evidence, or changed decision
-   - replacement: Title (J-NNN) or named obligation
-   - cap: bounded time or observable stopping condition
-   - return_point: exact checkpoint for resuming the displaced ticket
-   ```
-
-2. A strategically interesting idea alone is not urgency. Recommend keeping it as an optional pull or capping it at one to two Pomodoros instead of displacing active goal work.
-3. Append the record under today's `## Changes`. Keep the original `## Dispatch` unchanged as the historical morning decision.
-4. Checkpoint the displaced ticket when its current state is not enough to resume. It normally stays `active`; move it to `waiting` only for a real blocker.
-5. Start the replacement through Start.
 
 ## Output
 

@@ -4,7 +4,7 @@ Janus is a Markdown-first knowledge system and personal operating system.
 
 ## Knowledge locations
 
-- `journal/` contains dated passive daily records: the dispatch, material changes, ticket-session references, decisions no ticket owns, and rough notes.
+- `journal/` contains dated passive daily records: material changes, ticket-session references, decisions no ticket owns, and rough notes.
 - `tickets/` holds managed work: `tickets/BOARD.md` is the canonical state and each ticket file owns its checkpoint and history. See `docs/ticket.md`.
 - `brain/` contains promoted, durable wiki knowledge.
 - `brain/Precedents.md` holds accepted reusable judgment, and `brain/Grants.md` holds standing authority and the list of grant-gated actions. See `docs/decisions.md`.
@@ -16,6 +16,7 @@ Janus is a Markdown-first knowledge system and personal operating system.
 - Source code and repository-local documentation remain authoritative for code behavior.
 - `.janus/calendar/` is local optional calendar feed config read by `pnpm brain:calendar`; it is not durable knowledge.
 - `.janus/dream/` is local Dream run state and log; it is not durable knowledge.
+- `.janus/orientation.json` is local state for the daily orientation (`docs/ticket.md`); it is not durable knowledge.
 
 ## Source-of-truth hierarchy
 
@@ -43,7 +44,7 @@ Read `commands.md` first. Use it as the local command contract for available scr
 
 ## Capturing knowledge
 
-- Use today's `journal/YYYY-MM-DD.md` only for the dispatch, material changes, ticket-session references, decisions no ticket owns, and rough notes. Never copy ticket content into the journal.
+- Use today's `journal/YYYY-MM-DD.md` only for material changes, ticket-session references, decisions no ticket owns, and rough notes. Never copy ticket content into the journal.
 - The journal is not an execution or reminder surface: route fixed-time actions to the calendar, and work that should survive the conversation to tickets or the board inbox.
 - For standalone thoughts, articles, ideas, or topics that deserve their own identity, create a Markdown file directly in the Janus root.
 - Do not require frontmatter, tags, templates, or classification for root notes.

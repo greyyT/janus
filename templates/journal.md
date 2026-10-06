@@ -6,8 +6,6 @@ kind: journal
 
 # {{date:YYYY-MM-DD}}
 
-## Dispatch
-
 ## Changes
 
 _None recorded._

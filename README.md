@@ -18,7 +18,7 @@ Projects live under `brain/projects/`. A project page holds what Janus currently
 
 Decisions and authority are kept apart. My decisions are logged as they happen; reusable ones become precedents in `brain/Precedents.md` once I approve them; permissions for protected actions such as pushes, merges, and deploys are grants in `brain/Grants.md` or on the ticket. See `docs/decisions.md`.
 
-`journal/` is a passive daily record: the dispatch, material changes, ticket-session references, decisions no ticket owns, and rough notes. It is not a todo list or a reminder surface.
+`journal/` is a passive daily record: material changes, ticket-session references, decisions no ticket owns, and rough notes. It is not a todo list or a reminder surface.
 
 Root Markdown files are inbox captures. These are standalone thoughts that deserve their own title, source context, or likely promotion path. They can be incomplete or wrong. They are allowed to be messy.
 
@@ -46,11 +46,13 @@ The important part is the boundary. I should be able to drop anything into Janus
 
 There are no daily rituals to remember. Janus recognizes what the conversation needs through its skills in `.agents/skills/`:
 
-- `tickets` captures, starts, checkpoints, and replans managed work;
+- `tickets` captures, starts, and checkpoints managed work;
 - `projects` creates, updates, reviews, and closes projects from ticket evidence;
 - `decisions` records my decisions, proposes precedents, and maintains grants.
 
 Each active ticket says whether it needs me: `autonomous` while an agent drives it, `human_required` while it waits on my decision, review, or hands-on work. At most two tickets need my attention at once; autonomous work is not limited.
+
+On my first prompt of the day, and whenever something new needs me, Janus answers first and then tells me in a few lines what needs me: tickets waiting on me, a dream PR to merge, and the rest of today's calendar. When nothing does, it says nothing. See `docs/ticket.md`.
 
 ## dream
 
@@ -75,7 +77,7 @@ janus/
 ├── commands.md             # reference for package.json scripts
 ├── docs/                   # how tickets, projects, decisions, and Dream work
 ├── .agents/skills/         # tickets, projects, decisions
-├── .pi/extensions/         # /coordinate mode and the Dream catch-up
+├── .pi/extensions/         # /coordinate mode, the Dream catch-up, and orientation
 ├── coordinator/            # the coordinator Janus spawns per request
 ├── brain/
 │   ├── HOME.md
@@ -95,8 +97,6 @@ janus/
 The journal template contains:
 
 ```md
-## Dispatch
-
 ## Changes
 
 ## Notes

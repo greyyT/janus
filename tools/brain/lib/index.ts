@@ -4,3 +4,4 @@ export * from "./calendar.js";
 export * from "./filesystem.js";
 export * from "./sessions.js";
 export * from "./transcript.js";
+export * from "./orientation.js";

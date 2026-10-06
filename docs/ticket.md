@@ -72,10 +72,11 @@ Coordinator results do not reach the user directly. Janus first checks each one 
 Janus recognizes each phase from the conversation; there are no commands to remember.
 
 1. **Capture.** New work is classified first (calendar, board inbox, or ticket), checked for overlap, and written as `ready` or `waiting`. Capture never starts work.
-2. **Start.** The ticket moves to `active` and Janus gives a short briefing: what matters now, relevant prior decisions, and the exact first action.
+2. **Start.** The ticket moves to `active` and Janus gives a short briefing: what matters now, relevant prior decisions, and the exact first action. Asked what to work on, Janus recommends one ticket: work that needs the user first, then ready work serving an active goal or project.
 3. **Checkpoint.** When a session ends, a result or blocker appears, or work switches elsewhere, Janus records what changed, the next move, and the resulting state.
-4. **Replan.** When urgency or discovery displaces planned work, Janus records what was displaced, why, the replacement, a cap, and the return point.
+
+There is no morning dispatch. On the user's first prompt of the day, and whenever something new needs them, Janus adds a short orientation after its answer: `human_required` tickets with what they need, a dream PR waiting for a merge, and the rest of the day's calendar. The first one of the day also names the work moving autonomously. It says nothing when nothing needs the user. `.pi/extensions/orientation` gathers these from `tickets/BOARD.md`, `.janus/dream/pr`, and `pnpm brain:calendar`; the shown items live in `.janus/orientation.json` so parallel sessions do not repeat them.
 
 ## Who decides
 
-Janus handles routine upkeep on its own: briefings, starting work, checkpoints, and evidence-backed state changes. It asks first before creating a ticket it had to infer, marking anything `done` or `dropped`, displacing the day's protected work, exceeding limits, or reopening closed work.
+Janus handles routine upkeep on its own: briefings, starting work, checkpoints, and evidence-backed state changes. It asks first before creating a ticket it had to infer, marking anything `done` or `dropped`, exceeding limits, or reopening closed work.

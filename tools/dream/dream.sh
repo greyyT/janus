@@ -274,7 +274,7 @@ run() {
   if (( is_rolling )); then
     gh pr edit "$branch" --body-file "$body" >/dev/null || { close_out; fail "Dream pushed $branch but could not update the PR body: run gh pr edit $branch --body-file $body."; }
   else
-    gh pr create --base main --head "$branch" --title "$title" --body-file "$body" >/dev/null || { close_out; fail "Dream pushed $branch but could not open the PR: run gh pr create --head $branch --body-file $body."; }
+    gh pr create --base main --head "$branch" --title "$title" --body-file "$body" >"$STATE/pr" || { close_out; fail "Dream pushed $branch but could not open the PR: run gh pr create --head $branch --body-file $body."; }
   fi
   close_out
   log "dreamed ${days[*]} on $branch"

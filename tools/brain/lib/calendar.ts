@@ -284,7 +284,7 @@ function localizeIntervals(intervals: BusyInterval[], timezone: string): BusyInt
   }));
 }
 
-function formatDateTimeInTimezone(value: string, timezone: string): string {
+export function formatDateTimeInTimezone(value: string, timezone: string): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
     year: "numeric",
