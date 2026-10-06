@@ -16,6 +16,7 @@ pnpm <script> -- <variables>
 | --- | --- | --- |
 | `brain:calendar` | `tsx tools/brain/calendar.ts` | `--date YYYY-MM-DD`, `--json` |
 | `brain:calendar:add` | `tsx tools/brain/calendar-add.ts` | `--url URL`, `--name TEXT`, `--timezone TZ`, `--json` |
+| `brain:book:lookup` | `tsx tools/brain/book-lookup.ts` | exactly one of `--query TEXT`, `--isbn ISBN`, or `--url URL`; optional `--max-depth 1-10`, `--json` |
 | `brain:sessions` | `tsx tools/brain/sessions.ts` | `--date YYYY-MM-DD`, `--json` |
 | `brain:transcript` | `tsx tools/brain/transcript.ts` | `PATH`, `--raw` |
 | `dream` | `tools/dream/dream.sh` | `catch-up`, `--dry-run`, `--prompt PATH` (no `--`) |
@@ -44,6 +45,17 @@ pnpm <script> -- <variables>
 - `--name TEXT`: optional display label. Default: first unused `Calendar N`.
 - `--timezone TZ`: optional global planning time zone written to `.janus/calendar/config.json`.
 - `--json`: print `{ action, config_path, calendar, calendar_count }`.
+
+### `brain:book:lookup`
+
+- Performs a read-only online lookup against Google Books and Open Library; it never mutates the bookshelf.
+- Use exactly one of `--query TEXT`, `--isbn ISBN`, or `--url URL`.
+- `--url` accepts Google Books and Open Library pages, or an HTTPS URL containing an ISBN.
+- `--max-depth 1-10`: maximum rendered TOC depth. Default: `4`.
+- Human output renders trustworthy available contents as a `tree`-style fenced text block and cites metadata and TOC sources independently.
+- Ambiguous title or edition matches are returned for selection rather than silently resolved.
+- Missing trustworthy contents are reported explicitly; the command does not invent chapters.
+- `--json`: emit the structured lookup result for agent workflows.
 
 ### `brain:sessions`
 
