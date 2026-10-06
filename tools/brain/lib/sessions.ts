@@ -11,12 +11,20 @@ export interface JanusSession {
   lastActivity: string;
 }
 
-interface SessionEntry {
+export interface SessionEntry {
   type?: string;
+  id?: string;
+  parentId?: string | null;
   timestamp?: string;
   cwd?: string;
   name?: string;
+  customType?: string;
+  message?: { role?: string; content?: unknown };
 }
+
+// `/coordinate` appends this entry; the mode has no off, so the rest of the
+// transcript is coordination, not conversation Dream learns from.
+export const COORDINATE_MARKER = "janus-coordinate";
 
 export function resolveSessionsDir(env: NodeJS.ProcessEnv = process.env): string {
   if (env.PI_CODING_AGENT_SESSION_DIR) return expandHome(env.PI_CODING_AGENT_SESSION_DIR);
@@ -26,6 +34,7 @@ export function resolveSessionsDir(env: NodeJS.ProcessEnv = process.env): string
 
 // A Janus session is a pi transcript whose working directory is the Janus root.
 // Coordinators run in `coordinator/`, so their transcripts never match.
+// Only entries before the coordinate marker count.
 export async function listJanusSessions(repositoryRoot: string, date: string, sessionsDir: string): Promise<JanusSession[]> {
   const civilDate = parseCivilDate(date);
   if (civilDate === null) throw new Error(`invalid date "${date}"`);
@@ -62,8 +71,14 @@ async function listTranscripts(sessionsDir: string): Promise<string[]> {
   return transcripts;
 }
 
-async function readSessionOnDate(transcript: string, root: string, date: string): Promise<JanusSession | null> {
+export async function readJanusTranscript(transcript: string): Promise<SessionEntry[]> {
   const entries = (await readFile(transcript, "utf8")).split("\n").flatMap(parseEntry);
+  const marker = entries.findIndex(entry => entry.type === "custom" && entry.customType === COORDINATE_MARKER);
+  return marker === -1 ? entries : entries.slice(0, marker);
+}
+
+async function readSessionOnDate(transcript: string, root: string, date: string): Promise<JanusSession | null> {
+  const entries = await readJanusTranscript(transcript);
   const header = entries.find(entry => entry.type === "session");
   if (header?.cwd === undefined || path.resolve(header.cwd) !== root) return null;
 

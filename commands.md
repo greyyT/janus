@@ -17,6 +17,9 @@ pnpm <script> -- <variables>
 | `brain:calendar` | `tsx tools/brain/calendar.ts` | `--date YYYY-MM-DD`, `--json` |
 | `brain:calendar:add` | `tsx tools/brain/calendar-add.ts` | `--url URL`, `--name TEXT`, `--timezone TZ`, `--json` |
 | `brain:sessions` | `tsx tools/brain/sessions.ts` | `--date YYYY-MM-DD`, `--json` |
+| `brain:transcript` | `tsx tools/brain/transcript.ts` | `PATH`, `--raw` |
+| `dream` | `tools/dream/dream.sh` | `catch-up` (positional, no `--`) |
+| `dream:install` | `tools/dream/install.sh` | none |
 | `test` | `vitest run` | Janus defines none; pass Vitest args after `--`. |
 
 ## Variables
@@ -45,6 +48,22 @@ pnpm <script> -- <variables>
 
 - `--date YYYY-MM-DD`: local calendar day to list. Default: today.
 - Lists pi transcripts of Janus sessions — sessions whose working directory is the Janus root — with at least one entry on that day. Coordinator sessions run in `coordinator/` and are excluded.
+- Entries after `/coordinate` turned coordinate mode on (a `janus-coordinate` custom entry) are ignored.
 - Reads transcripts from `PI_CODING_AGENT_SESSION_DIR`, else `PI_CODING_AGENT_DIR/sessions`, else `~/.pi/agent/sessions`.
-- Coordinator results appear inside these transcripts as user turns wrapped in `<coordinator_result>`; they are coordinator output, not the user's words.
 - `--json`: print `{ date, sessions_dir, sessions: [{ path, name, firstActivity, lastActivity }] }`; activity times are ISO timestamps of the first and last entries on that day.
+
+### `brain:transcript`
+
+- `PATH`: required transcript `.jsonl` path, as listed by `brain:sessions`.
+- Default view: the conversation on the session's current branch up to the coordinate-mode mark, as `user:` and `janus:` turns; each tool call is one line such as `[Read brain/HOME.md]`. Thinking, tool results, and abandoned branches are left out.
+- `--raw`: print the transcript file unchanged.
+
+### `dream`
+
+- Without arguments: dream now if a day is due; this is what launchd runs at 03:00. Run it as `pnpm dream`.
+- `catch-up`: report an unseen failed dream, or when a day is due, move the uncommitted changes and finish in the background. Run by `.pi/extensions/dream` before each prompt; pass it as `pnpm dream catch-up`.
+- Writes state and logs to `.janus/dream/`. See `docs/dream.md`.
+
+### `dream:install`
+
+- Installs or reinstalls the `com.janus.dream` launchd job for this checkout, keeping the current `PATH`.

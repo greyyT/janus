@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
-import { listJanusSessions, resolveSessionsDir } from "./sessions.js";
+import { COORDINATE_MARKER, listJanusSessions, resolveSessionsDir } from "./sessions.js";
 
 const DATE = "2026-01-15";
 
@@ -50,6 +50,23 @@ describe("listJanusSessions", () => {
 
     await expect(listJanusSessions(root, DATE, sessionsDir)).resolves.toEqual([
       { path: pastMidnight, name: null, firstActivity: localIso(15, 0, 20), lastActivity: localIso(15, 1) },
+    ]);
+  });
+
+  test("ignores entries after the coordinate marker", async () => {
+    const { root, sessionsDir, projectDir } = await createFixture();
+    const transcript = path.join(projectDir, "coordinated.jsonl");
+    const lines = [
+      { type: "session", id: "coordinated", timestamp: localIso(14, 9), cwd: root },
+      { type: "message", timestamp: localIso(14, 9, 5) },
+      { type: "custom", customType: COORDINATE_MARKER, timestamp: localIso(14, 9, 10) },
+      { type: "message", timestamp: localIso(15, 10) },
+    ];
+    await writeFile(transcript, `${lines.map(line => JSON.stringify(line)).join("\n")}\n`, "utf8");
+
+    await expect(listJanusSessions(root, DATE, sessionsDir)).resolves.toEqual([]);
+    await expect(listJanusSessions(root, "2026-01-14", sessionsDir)).resolves.toEqual([
+      { path: transcript, name: null, firstActivity: localIso(14, 9), lastActivity: localIso(14, 9, 5) },
     ]);
   });
 

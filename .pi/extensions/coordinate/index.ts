@@ -239,6 +239,8 @@ export default function coordinate(pi: ExtensionAPI): void {
       }
       isJanusIdle = () => ctx.isIdle();
       mode = { janusPane, workspace };
+      // Marks the transcript so Dream ignores everything from here on (tools/brain/lib/sessions.ts).
+      pi.appendEntry("janus-coordinate");
       registerTools(workspace);
       ctx.ui.notify(`Coordinator mode is on until this session ends; ${describe(mode)}.`, "info");
     },

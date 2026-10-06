@@ -8,11 +8,14 @@ Janus is a Markdown-first knowledge system and personal operating system.
 - `tickets/` holds managed work: `tickets/BOARD.md` is the canonical state and each ticket file owns its checkpoint and history. See `docs/ticket.md`.
 - `brain/` contains promoted, durable wiki knowledge.
 - `brain/Precedents.md` holds accepted reusable judgment, and `brain/Grants.md` holds standing authority and the list of grant-gated actions. See `docs/decisions.md`.
+- `brain/Working Model.md` holds Janus's beliefs about how the user actually works. Read it before planning, dispatching, or estimating capacity.
 - Load the `decisions` skill whenever the user answers a decision Janus brought to them, or states or changes a reusable decision, standing permission, explicit prohibition, or "from now on" behavior.
 - Non-default Markdown files placed directly in the repository root are standalone inbox captures unless protected.
-- Root inbox notes are temporary and may be incomplete, incorrect, or unverified.
+- Root inbox notes are temporary and may be incomplete, incorrect, or unverified. Dream digests them every night.
+- Dream (`docs/dream.md`) consolidates each day overnight and proposes every change as one pull request; merging it is the user's approval.
 - Source code and repository-local documentation remain authoritative for code behavior.
 - `.janus/calendar/` is local optional calendar feed config read by `pnpm brain:calendar`; it is not durable knowledge.
+- `.janus/dream/` is local Dream run state and log; it is not durable knowledge.
 
 ## Source-of-truth hierarchy
 

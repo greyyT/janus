@@ -1,3 +1,4 @@
 node_modules/
 /.janus/calendar/
+/.janus/dream/
 /task-create.md

@@ -33,7 +33,14 @@ The coordinator's copy of this list is in `coordinator/.pi/SYSTEM.md`, because c
 
 ## Active
 
-_None yet._
+### Dream commits and opens its PR · G-001
+
+- scope: global
+- allows: during a dream run (`tools/dream/dream.sh`), moving the main checkout's uncommitted changes into the dream worktree; committing there; pushing `dream/*` branches; opening and updating the dream PR; removing the dream worktree and its local branch afterwards
+- excludes: merging the dream PR; pushing to `main`; force-pushing
+- uses: unlimited
+- expires: until revoked
+- source: user, 2026-10-06, Janus session designing Dream
 
 ## Revoked
 

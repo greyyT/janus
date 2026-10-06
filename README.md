@@ -48,9 +48,16 @@ There are no daily rituals to remember. Janus recognizes what the conversation n
 
 - `tickets` captures, starts, checkpoints, and replans managed work;
 - `projects` creates, updates, reviews, and closes projects from ticket evidence;
-- `decisions` records my decisions, proposes precedents, and maintains grants.
+- `decisions` records my decisions, proposes precedents, and maintains grants;
+- `dream` runs overnight only, through `tools/dream/dream.sh`.
 
 Each active ticket says whether it needs me: `autonomous` while an agent drives it, `human_required` while it waits on my decision, review, or hands-on work. At most two tickets need my attention at once; autonomous work is not limited.
+
+## dream
+
+Every night at 03:00, Dream reads the day back: my Janus conversations, my root notes, and everything Janus changed. It brings tickets, projects, decisions, precedents, grants, and `brain/Working Model.md` (how I actually work) up to date, digests every root note, and opens one pull request whose description explains every change and its evidence. Merging is my approval. If the Mac was off or offline, Dream catches up before my next prompt. See `docs/dream.md`.
+
+Install the nightly job once per machine with `pnpm dream:install`.
 
 ## coordinate mode
 
@@ -67,21 +74,23 @@ janus/
 ├── AGENTS.md               # locations, authority, and rules agents follow
 ├── README.md
 ├── commands.md             # reference for package.json scripts
-├── docs/                   # how tickets, projects, and decisions work
-├── .agents/skills/         # tickets, projects, decisions
-├── .pi/extensions/         # /coordinate mode
+├── docs/                   # how tickets, projects, decisions, and Dream work
+├── .agents/skills/         # tickets, projects, decisions, dream
+├── .pi/extensions/         # /coordinate mode and the Dream catch-up
 ├── coordinator/            # the coordinator Janus spawns per request
 ├── brain/
 │   ├── HOME.md
 │   ├── Precedents.md
 │   ├── Grants.md
+│   ├── Working Model.md
 │   └── projects/
 ├── tickets/                # BOARD.md and J-NNN files, created by the first capture
 ├── journal/
 ├── templates/
 │   └── journal.md
 └── tools/
-    └── brain/              # calendar scripts
+    ├── brain/              # calendar and session-transcript scripts
+    └── dream/              # the nightly Dream runner and its launchd installer
 ```
 
 The journal template contains:
@@ -113,10 +122,11 @@ pnpm brain:calendar:add -- --url "webcal://calendar.google.com/calendar/ical/...
 pnpm brain:calendar -- --date YYYY-MM-DD --json
 ```
 
-List the day's Janus conversation transcripts, excluding coordinator sessions:
+List the day's Janus conversation transcripts, excluding coordinator sessions, and read one:
 
 ```sh
 pnpm brain:sessions -- --date YYYY-MM-DD --json
+pnpm brain:transcript -- <path>
 ```
 
 Run tests:
