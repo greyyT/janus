@@ -22,7 +22,7 @@ const COORDINATE_MODE_PROMPT = new URL("coordinate-mode.md", import.meta.url);
 
 // `/coordinate` is one-way: once on, the mode lasts until the session is killed.
 // Coordinators run in the chosen Herdr workspace and report each stop over a
-// Unix socket, so results never touch the editor Greyy types in. A result is
+// Unix socket, so results never touch the editor the user types in. A result is
 // handed to the model at once when Janus is idle; otherwise it waits for the
 // next stop that completes normally (an aborted run keeps the queue).
 export default function coordinate(pi: ExtensionAPI): void {

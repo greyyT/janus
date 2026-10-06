@@ -5,7 +5,7 @@
 #
 #   dream.sh                  dream now when due (launchd runs this at 03:00)
 #   dream.sh catch-up         report an unseen failure, or when due, move the changes
-#                             and finish in the background (run before Greyy's prompts)
+#                             and finish in the background (run before the user's prompts)
 #   dream.sh --dry-run        dream the latest day on a copy of the uncommitted changes;
 #                             write the PR body and Dream's diff under .janus/dream/dry-run/,
 #                             then discard the worktree: nothing moves, commits, or pushes
@@ -45,14 +45,14 @@ done
 [[ -f "$PROMPT" ]] || { echo "no prompt file at $PROMPT" >&2; exit 2; }
 mkdir -p "$STATE"
 cd "$ROOT"
-# Tool output goes to the log; messages meant for Greyy use fd 3 (out) and 4 (err).
+# Tool output goes to the log; messages meant for the user use fd 3 (out) and 4 (err).
 exec 3>&1 4>&2 >>"$LOG" 2>&1
 
 log() { printf '%s %s\n' "$(date '+%F %T')" "$*" >>"$LOG"; }
 next_day() { date -j -v+1d -f %F "$1" +%F; }
 dream_target() { date -v-3H -v-1d +%F; }
 
-# Greyy sees a catch-up failure at once; any other failure on his next prompt.
+# The user sees a catch-up failure at once; any other failure on their next prompt.
 fail() {
   log "$1"
   if [[ "$MODE" == catch-up || "$MODE" == dry-run ]]; then echo "$1 See $LOG." >&4; else echo "$1 See $LOG." >"$FAILED"; fi
@@ -96,7 +96,7 @@ gather_input() { # output days changes_commit notes_dir
 }
 
 # Root notes Dream kept unresolved go back to the checkout and stay out of the
-# PR. $KEPT lists them as "<sha1>\t<name>"; one Greyy has not changed since is
+# PR. $KEPT lists them as "<sha1>\t<name>"; one the user has not changed since is
 # left out of the next dream too. Sets `pathspec` (what Dream takes) and
 # `carried` (the $KEPT lines still valid).
 changes_pathspec() {

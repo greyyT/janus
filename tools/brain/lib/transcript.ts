@@ -6,7 +6,7 @@ type ContentBlock = { type?: string; text?: string; name?: string; arguments?: R
 const TOOL_ARGUMENT_MAX = 120;
 const PRIMARY_ARGUMENTS = ["path", "file_path", "command", "pattern", "url", "query"];
 
-// Renders the conversation on the session's current branch: Greyy's turns,
+// Renders the conversation on the session's current branch: the user's turns,
 // Janus's text, and one line per tool call. Thinking, tool results, and
 // branches abandoned with pi's tree navigation are left out.
 export function renderTranscript(entries: SessionEntry[]): string {

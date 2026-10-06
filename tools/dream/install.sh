@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Installs the launchd job that runs tools/dream/dream.sh for this Janus
 # checkout at 03:00 local time. launchd runs a job missed during sleep on wake;
-# dream.sh itself skips while offline, and the catch-up before Greyy's next
+# dream.sh itself skips while offline, and the catch-up before the user's next
 # prompt covers the rest. The job keeps the PATH this script runs with, so pi,
-# pnpm, gh, and git resolve as they do in Greyy's shell.
+# pnpm, gh, and git resolve as they do in the user's shell.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"

@@ -4,8 +4,8 @@ import { loadCalendarDay, orient } from "../../../tools/brain/lib/index.js";
 
 const ROOT = fileURLToPath(new URL("../../..", import.meta.url));
 
-// Tells Janus, after it answers, what needs Greyy today: once on his first
-// prompt of the day, then whenever something new needs him (tools/brain/lib/orientation.ts).
+// Tells Janus, after it answers, what needs the user today: once on their first
+// prompt of the day, then whenever something new needs them (tools/brain/lib/orientation.ts).
 export default function orientation(pi: ExtensionAPI): void {
   if (process.env.JANUS_DREAM) return;
   let pending: string | null = null;

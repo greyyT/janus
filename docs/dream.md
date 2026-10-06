@@ -1,6 +1,6 @@
 # Dream
 
-Dream is Janus's nightly consolidation. During the day Janus records what it notices at the moment: decision lines, ticket checkpoints, project updates, root notes. Some things only show up across a whole day: a preference stated in passing, the same correction made twice, a plan that does not match how Greyy actually works, a root note that never got promoted. Dream reads the day back and brings Janus's state up to date, then hands every change to Greyy as one pull request.
+Dream is Janus's nightly consolidation. During the day Janus records what it notices at the moment: decision lines, ticket checkpoints, project updates, root notes. Some things only show up across a whole day: a preference stated in passing, the same correction made twice, a plan that does not match how the user actually works, a root note that never got promoted. Dream reads the day back and brings Janus's state up to date, then hands every change to the user as one pull request.
 
 The instructions Janus follows during a run are the prompt `tools/dream/prompt.md`. This document explains the setup around it.
 
@@ -8,7 +8,7 @@ The instructions Janus follows during a run are the prompt `tools/dream/prompt.m
 
 - **03:00 local, by launchd.** `pnpm dream:install` installs the job for this checkout. On a Mac that was asleep at 03:00, launchd runs it on wake.
 - **Offline:** the run checks GitHub first and exits without touching anything when the network is down. launchd cannot wait for a network.
-- **Catch-up before the next prompt.** The `.pi/extensions/dream` extension runs `tools/dream/dream.sh catch-up` before each of Greyy's prompts. It returns at once when no dream is due. When one is due, it moves the changes (a few seconds), then lets the model part run in the background.
+- **Catch-up before the next prompt.** The `.pi/extensions/dream` extension runs `tools/dream/dream.sh catch-up` before each of the user's prompts. It returns at once when no dream is due. When one is due, it moves the changes (a few seconds), then lets the model part run in the background.
 
 A day is due once it is past 03:00 the next morning and `.janus/dream/last`, the last day dreamed, is older. One run covers every day since the last dream.
 
@@ -18,7 +18,7 @@ Before the model starts, the runner gathers every input into one Markdown file w
 
 | Input | What it is |
 | --- | --- |
-| Uncommitted changes | The commit holding them, as stat and patch: what Janus and Greyy recorded at the time |
+| Uncommitted changes | The commit holding them, as stat and patch: what Janus and the user recorded at the time |
 | Root notes | Each note in the root with its content; notes kept earlier and unchanged are only named |
 | Janus conversations | Every session of the days, rendered like `pnpm brain:transcript`, with its path |
 | Earlier sightings | `## Noticed, not changed` from dream PRs of the previous 30 days |
@@ -41,19 +41,19 @@ flowchart TD
   K --> R["push; open or update the PR; remove the worktree and local branch"]
 ```
 
-- **Moving, not copying.** The main checkout ends up clean, and the changes come back through the PR. Copying would leave root notes behind, and the next dream would digest them again. Until Greyy merges the PR, sessions do not see those changes; the next dream fast-forwards `main` after a merge.
+- **Moving, not copying.** The main checkout ends up clean, and the changes come back through the PR. Copying would leave root notes behind, and the next dream would digest them again. Until the user merges the PR, sessions do not see those changes; the next dream fast-forwards `main` after a merge.
 - **One open dream PR at a time.** While it is open, later dreams add commits to its branch and rewrite its body to cover every day.
 - **Its own session is not saved.** The run uses `pi --no-session`, so Dream never reads its own transcript.
 
 ## What it changes
 
-Through the skills that own each record: tickets, projects, decision lines, precedents, grants, and `brain/Working Model.md`, the page of Janus's beliefs about how Greyy works. Which evidence wins depends on the question: Greyy's own turns for what he wants (the later explicit statement wins), the source repository for how code behaves, and the canonical Markdown for Janus's recorded state unless stronger evidence shows it was recorded wrongly.
+Through the skills that own each record: tickets, projects, decision lines, precedents, grants, and `brain/Working Model.md`, the page of Janus's beliefs about how the user works. Which evidence wins depends on the question: the user's own turns for what they want (the later explicit statement wins), the source repository for how code behaves, and the canonical Markdown for Janus's recorded state unless stronger evidence shows it was recorded wrongly.
 
-A working-model belief needs Greyy's explicit statement, or the same behaviour seen again under similar conditions. A single observation goes under **Noticed, not changed** in the PR body. Later dreams read those sections from the dream PRs of the previous 30 days to find repetitions, so the PR history is the record of earlier sightings; nothing else is stored.
+A working-model belief needs the user's explicit statement, or the same behaviour seen again under similar conditions. A single observation goes under **Noticed, not changed** in the PR body. Later dreams read those sections from the dream PRs of the previous 30 days to find repetitions, so the PR history is the record of earlier sightings; nothing else is stored.
 
-Every root note is considered, but not every note is resolved: Dream promotes and archives it, archives it, deletes it, or keeps it unresolved. A kept note goes back to the root, stays out of the PR, and is listed with its SHA-1 in `.janus/dream/kept`; later dreams leave it out until Greyy changes it.
+Every root note is considered, but not every note is resolved: Dream promotes and archives it, archives it, deletes it, or keeps it unresolved. A kept note goes back to the root, stays out of the PR, and is listed with its SHA-1 in `.janus/dream/kept`; later dreams leave it out until the user changes it.
 
-Merging is approval. When a skill would normally propose and wait for Greyy, such as a precedent's wording, Dream writes the exact change on its branch and lists it under **Needs your judgment**. It stays non-canonical until the merge, and closing the PR rejects it. Dream never records approval as given: a precedent says `approved: by merging dream PR <branch>`, which only becomes true on `main`. The PR body describes every change, why, and its evidence, so it can be judged without opening files.
+Merging is approval. When a skill would normally propose and wait for the user, such as a precedent's wording, Dream writes the exact change on its branch and lists it under **Needs your judgment**. It stays non-canonical until the merge, and closing the PR rejects it. Dream never records approval as given: a precedent says `approved: by merging dream PR <branch>`, which only becomes true on `main`. The PR body describes every change, why, and its evidence, so it can be judged without opening files.
 
 ## The prompt
 
@@ -79,4 +79,4 @@ Dream acts under `Dream commits and opens its PR (G-001)` in `brain/Grants.md`: 
 | The model run fails, writes no PR body, or the push fails | Dream's edits are dropped, the changes go back to the checkout; reported |
 | Pushed, but the PR could not be opened or updated | The day counts as dreamed; the message gives the `gh` command to finish |
 
-A failure during a catch-up shows at once. A failure at 03:00 or in the background shows before Greyy's next prompt. Details are in `.janus/dream/dream.log`.
+A failure during a catch-up shows at once. A failure at 03:00 or in the background shows before the user's next prompt. Details are in `.janus/dream/dream.log`.
