@@ -68,6 +68,10 @@ I talk only to Janus. Coordinators report back on their own; Janus checks each r
 
 Coordinate mode needs `pi` and `herdr` on `PATH`.
 
+## notifications
+
+`.pi/extensions/notify-user.ts` sends finished Janus runs to my phone through a Telegram bot. It reads `JANUS_TELEGRAM_BOT_TOKEN` and `JANUS_TELEGRAM_CHAT_ID` from `.pi/extensions/.env` (gitignored) or the environment; without them it warns instead of sending.
+
 ## repository map
 
 ```text
@@ -77,7 +81,7 @@ janus/
 ├── commands.md             # reference for package.json scripts
 ├── docs/                   # how tickets, projects, decisions, and Dream work
 ├── .agents/skills/         # tickets, projects, decisions
-├── .pi/extensions/         # /coordinate mode, the Dream catch-up, and orientation
+├── .pi/extensions/         # /coordinate mode, the Dream catch-up, orientation, and Telegram notifications
 ├── coordinator/            # the coordinator Janus spawns per request
 ├── brain/
 │   ├── HOME.md
@@ -91,7 +95,8 @@ janus/
 │   └── journal.md
 └── tools/
     ├── brain/              # calendar and session-transcript scripts
-    └── dream/              # the nightly Dream runner, its prompt, and its launchd installer
+    ├── dream/              # the nightly Dream runner, its prompt, and its launchd installer
+    └── notify-user/        # tests for the Telegram notification extension
 ```
 
 The journal template contains:
