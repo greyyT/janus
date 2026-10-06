@@ -152,6 +152,7 @@ async function tldr(
 }
 
 export default function notifyUserExtension(pi: ExtensionAPI) {
+  if (process.env.JANUS_DREAM) return;
   let runStartedAt: number | undefined;
   let bridge: TelegramBridge | undefined;
   let questionnaire: TelegramQuestionnaire | undefined;
@@ -165,13 +166,7 @@ export default function notifyUserExtension(pi: ExtensionAPI) {
     text: string,
     details?: string,
   ) {
-    if (!bridge) {
-      ctx.ui.notify(
-        "notify-user: missing JANUS_TELEGRAM_BOT_TOKEN or JANUS_TELEGRAM_CHAT_ID",
-        "warning",
-      );
-      return;
-    }
+    if (!bridge) return;
     try {
       await bridge.send(text, { details });
     } catch (error) {
@@ -186,7 +181,13 @@ export default function notifyUserExtension(pi: ExtensionAPI) {
     questionnaire = undefined;
     previousBridge?.close();
     runStartedAt = undefined;
-    if (!JANUS_TELEGRAM_BOT_TOKEN || !JANUS_TELEGRAM_CHAT_ID) return;
+    if (!JANUS_TELEGRAM_BOT_TOKEN || !JANUS_TELEGRAM_CHAT_ID) {
+      ctx.ui.notify(
+        "notify-user: missing JANUS_TELEGRAM_BOT_TOKEN or JANUS_TELEGRAM_CHAT_ID",
+        "warning",
+      );
+      return;
+    }
 
     const sessionId = ctx.sessionManager.getSessionId();
     const currentBridge = createTelegramBridge({
@@ -243,8 +244,9 @@ export default function notifyUserExtension(pi: ExtensionAPI) {
     const duration = runStartedAt ? Date.now() - runStartedAt : 0;
     runStartedAt = undefined;
 
+    // Without a bridge there is nothing to send; startSession already warned.
     const message = lastMessage(ctx, "assistant");
-    if (!message || message.stopReason === "aborted") return;
+    if (!bridge || !message || message.stopReason === "aborted") return;
 
     const label = escapeHtml(sessionLabel(ctx));
     if (message.stopReason === "error") {
