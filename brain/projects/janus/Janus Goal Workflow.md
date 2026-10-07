@@ -122,6 +122,8 @@ Do not store a current weekly execution queue, executable ticket list, or sessio
 
 A ticket has at most one primary `goal: G-NNN`. That relationship alone does not entitle it to time. Explicitly agreed goal work uses a `## Goal commitment` section in that ticket, separate from its ordinary Current checkpoint. Use one outstanding commitment per ticket; the work log preserves fulfilled/superseded commitments before the section is replaced.
 
+For a shared routine-reading agreement, this section may instead link to the managed book's authoritative `## Reading commitment`; the book can likewise link to an existing substantial ticket-owned agreement. Follow the book skill and Reading Workflow to resolve one owner and preserve history. Verify/count/escalate the shared agreement once; never duplicate its live blocks or add two counters. A book's independent reading agreement does not automatically become a goal commitment.
+
 ```md
 ## Goal commitment
 
@@ -166,7 +168,7 @@ Record results or displacement when reported during the day as well; do not wait
 - Count each distinct, confirmed missed/deferred agreed block once for the same unfulfilled promised output. Repeatedly moving one block before it occurs is one block; distinct agreed replacement blocks can qualify separately.
 - Illness, genuine urgent obligations and necessary recovery are recorded as excused displacement, excluded from the escalation count, and trigger replanning. Unknown reasons/results require clarification, not a strike.
 - Rescheduling and partial progress do not erase eligible misses. Completing the promised output closes the commitment. Approved output changes preserve the prior history/disposition rather than quietly resetting the counter.
-- At three eligible postponements, apply [[brain/Precedents|Harsh accountability after three goal postponements (P-001)]] after reading its current conditions: harsh, performed anger; evidence-based consequences; challenge whether the goal deserves active status; require concrete action or explicit replanning instead of vague recommitment.
+- At three eligible postponements, apply [[brain/Precedents|Harsh accountability after three goal or reading postponements (P-001)]] after reading its current conditions: harsh, performed anger; evidence-based consequences; challenge whether the goal deserves active status; require concrete action or explicit replanning instead of vague recommitment.
 - The user retains control. No insults, fabricated certainty, claimed actual assistant anger, coercion, or unilateral lifecycle changes. Respect conscious decisions without repeating the same scolding absent new evidence.
 - When capacity exists now, recommend a bounded immediate action. Otherwise resolve a realistic replacement block and named competing activity removed, or recommend revising/pausing the plan. Judge the intervention by subsequent action, not emotional intensity.
 - Do not reconstruct strikes from old vague inactivity. Existing goals/tickets begin with only verifiable agreed blocks and outcomes.

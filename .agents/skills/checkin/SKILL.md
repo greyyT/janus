@@ -1,11 +1,11 @@
 ---
 name: checkin
-description: "Daily check-in: gather the last Dream PR, recent work, unfinished tickets, active-goal commitments, and today's calendar; verify agreed goal blocks and give one short briefing. Load when the user asks to check in or starts their day with Janus."
+description: "Daily check-in: gather the last Dream PR, recent work, unfinished tickets, goal and managed-reading commitments, and today's calendar; verify agreed blocks and give one short briefing. Load when the user asks to check in or starts their day with Janus."
 ---
 
 # Daily Check-in
 
-The check-in gets the user ready to work in under a minute of reading. It reports what changed, what is unfinished, what needs their judgment, and what the day allows. It is not a status report, and it must not create new obligations.
+The check-in gets the user ready to work in under a minute of reading. It reports what changed, what is unfinished, what needs their judgment, and what the day allows. It is not a status report. It may propose today's reading allocation, but must not create an obligation until the user agrees.
 
 **Test for every line:** would the user act differently, or have to go looking, without it? If not, cut it.
 
@@ -34,12 +34,17 @@ Run these reads in parallel. Do not ask the user anything until you finish gathe
 5. **Calendar.** Run `pnpm -s brain:calendar --date <today>`. Read `commands.md` first if you have not already in this session. Combine the busy blocks with the user's focus window and fixed commitments from the `<user-profile>` section and `brain/Working Model.md` to work out the real focus capacity left today, counted from the current time.
 6. **Context.** Read the current focus and goal milestone in `brain/HOME.md`, and `brain/Working Model.md` for capacity beliefs.
 7. **Goal commitments.** Read `.agents/skills/goal/SKILL.md` fully. Discover canonical active goal files and non-closed tickets linked to them, including Ready tickets not touched in recent journals. Inspect their `## Goal commitment` sections and supporting work-log evidence. Read the relevant goal records and `brain/Precedents.md`. Do not infer commitments from a ticket's age, goal metadata, or suggested focus.
+8. **Reading commitments.** Read `.agents/skills/book/SKILL.md` fully, `brain/Reading.md`, and managed books with `plan_status: active` or `synthesis_pending`. Inspect `## Reading commitment` and Reading history, resolving any shared owner links with goal commitments. Include learning-closeout work even when it has no canonical goal. Candidates and recreational reading are not commitments. A weekly reading plan is not required; old allocations do not automatically become new blocks.
 
-## Verify goal commitments
+## Verify goal and reading commitments
 
-After gathering, run the goal skill's Verify daily and, when applicable, Handle postponement procedures. Compare elapsed agreed blocks with recorded evidence. Missing results stay unknown; ask one focused question if needed. Record confirmed results and distinct postponements in the owning ticket, not the journal or a second counter. Show the verified count and today's agreed output/block. At three eligible postponements, apply the current P-001 rule; exceptions are recorded and replanned rather than scolded.
+After gathering, run the goal and book skills' daily verification and applicable postponement procedures. Compare elapsed agreed blocks with recorded evidence. Missing results stay unknown; ask one focused question if needed. A reading session honored through its stop but short of its content aim is pace evidence, not automatically a postponement.
 
-If an active goal has no agreed commitment, surface that gap and recommend the smallest commitment decision. Do not schedule work, establish a commitment, or change the goal without approval. No historical strikes are invented, and a reschedule does not erase confirmed misses. If a result or replan needs the user's answer, finish that loop when they reply using the goal/tickets/decisions skills.
+Resolve each agreement's authoritative owner (ticket or managed book) before recording or reporting. Record confirmed results and distinct postponements only there, not in the journal or a second counter. Factual reported reading positions update immediately without a second approval; lifecycle, scope, target and commitment changes still require approval. Show the verified count and today's agreed output/block. At three eligible postponements, apply current P-001 once for the agreement; exceptions are recorded and replanned rather than scolded. Never double-count or duplicate escalation for a shared reading/goal block.
+
+Each check-in considers reading against today's real capacity and priorities: confirm the agreed block if one exists; otherwise, when reading fits, propose one specific active book/closeout, time box/block, content aim, stopping point and displaced activity through the book skill. The user can approve that allocation during check-in; a weekly planning command or previously scheduled block is not required. Keep proposals separate from agreed commitments and do not silently change the broader checkpoint, target or budget. Zero-reading days are valid.
+
+If an active goal or managed reading/closeout plan has no agreed commitment, surface that gap and recommend the smallest commitment decision. Do not schedule work, establish a commitment, or change the plan without approval. No historical strikes are invented, and a reschedule does not erase confirmed misses. If a result or replan needs the user's answer, finish that loop when they reply using the relevant goal/book/tickets/decisions skills.
 
 ## Report
 
@@ -58,7 +63,10 @@ Use this shape. Leave out any section with nothing worth saying. Do not write "N
 
 **Today** — <busy blocks>; ~<N> focus Pomodoros left <window>
 
-**Goal commitment** — <Ticket title · ID>: <agreed output and today's block, or result needing confirmation>; <N>/3 verified postponements
+**Commitments**
+- <Goal ticket title · ID or Book title>: <agreed output and today's block, or result needing confirmation>; <N>/3 verified postponements
+
+**Reading proposal** — <Book title>: <time box/block, content aim, stop and displaced activity>; <approval question, only when proposing unagreed work>
 
 **Suggested focus:** <one default, why in one clause>
 
@@ -71,12 +79,12 @@ Rules:
 - Do not repeat the PR body, journal lines, or anything the user said in this session.
 - Give one suggested focus, not a menu. Weigh it against the HOME milestone and the remaining capacity. Do not choose by age.
 - Judge limits only by the `tickets` skill: `autonomous` tickets never count toward the active limit. Do not use the limit text in the board footer.
-- Raise goal displacement only from evidence. Distinguish general drift from verified postponements of agreed blocks; only the latter count toward P-001. Do not duplicate the commitment assessment under Noticed.
-- When an active goal has no agreed commitment, use the Goal commitment line to say so and recommend a decision; do not show an invented zero count or block.
+- Raise goal/reading displacement only from evidence. Distinguish general drift from verified postponements of agreed blocks; only the latter count toward P-001. Do not duplicate the commitment assessment under Noticed or report a shared agreement twice.
+- When an active goal or managed reading/closeout plan has no agreed commitment, say so under Commitments and recommend a decision; do not show an invented zero count or block. Keep paused plans and recreational reading out of daily demands.
 - Aim for about 15 lines in ordinary briefings. Missing-result clarification or required threshold escalation must not be suppressed to meet that limit.
 
 ## After the report
 
 - If `journal/<today>.md` is missing, create it with only the `# <today>` heading. Do not copy the briefing into it.
-- Goal verification may update ticket commitment checkpoints and append confirmed result/postponement evidence through the goal and tickets skills. Do not change board or Dream state, invent progress, or mark a whole ticket done as part of the briefing. New commitments, replacement blocks and plan changes require agreement; other state mismatches still go to the user through tickets.
+- Commitment verification may update ticket/book checkpoints and append confirmed result/postponement evidence through the relevant skills. Record factual reported book positions immediately; do not require a second approval. Do not change board or Dream state, invent progress, or mark a whole ticket/book plan done as part of the briefing. New commitments, replacement blocks and material plan/lifecycle changes require agreement; other state mismatches still go to the user through their owning skill.
 - Mark items as shown in `.janus/orientation.json` only if the orientation extension's own format makes that obvious. Otherwise leave the file alone.

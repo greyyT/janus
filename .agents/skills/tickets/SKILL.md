@@ -29,7 +29,7 @@ A ticket file has a `# Title · J-NNN` heading and these fields:
 - `execution`, only while `active` or `verifying`: `autonomous — coordinator <id>: <what it is doing>` or `human_required — <what the user must do>`;
 - `## Current checkpoint`: only the latest resumable state;
 - `## Acceptance`: checklist, checked only on observable evidence;
-- `## Goal commitment`, only for explicitly agreed goal work: the near-term promised output, block references, evidence, and verified postponement count. The goal skill and `brain/projects/janus/Janus Goal Workflow.md` own its contract. Preserve it during ordinary checkpoints; never infer a commitment from `goal` metadata or reset its count on rescheduling. Its event history stays in this ticket's append-only work log;
+- `## Goal commitment`, only for explicitly agreed goal work: the near-term promised output, block references, evidence, and verified postponement count. The goal skill and `brain/projects/janus/Janus Goal Workflow.md` own its contract. Preserve it during ordinary checkpoints; never infer a commitment from `goal` metadata or reset its count on rescheduling. Its event history stays in this ticket's append-only work log. For shared routine-reading agreements it may instead link to the book-owned `## Reading commitment`; follow the book skill and verify/count only in the authoritative owner, never in duplicate;
 - `## Grants`, only when the user granted permissions for this work: `work`-scope grants in the `brain/Grants.md` entry format without an ID, expiring at `ticket close` unless stated otherwise;
 - `## Work log`: dated entries, append-only. Each decision the user makes is its own `Decision (user):` line, written through the decisions skill.
 

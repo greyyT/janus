@@ -18,9 +18,9 @@ Review the week as a system, then choose a deliberately small set of outcome com
 - Use three total next-week outcome commitments as a soft default. Fewer are valid; recommendations above three require a capacity argument and explicit approval.
 - Weekly selection does not activate ready tickets. ticket Start (tickets skill) owns activation at execution time.
 - New managed work is created through a separately approved ticket Capture (tickets skill) interaction, not the legacy backlog task CLI.
-- Reading planning remains separate, but its time is included in capacity.
+- For reading review/planning, read `.agents/skills/book/SKILL.md` fully and follow it. Reading uses the same shared capacity; managed books own routine-reading/closeout commitments and history. The weekly report is optional and not an allocation prerequisite. Shared goal/reading agreements have one owner/counter.
 - Do not reconstruct or request routine wellbeing, sleep, stress, focus, short-form, or Pomodoro histories. Personal health data remains outside Janus. External device or app evidence may be used only when Greyy explicitly supplies it for a specific decision.
-- Goal, managed-book, project, HOME, and durable knowledge changes require explicit preview and approval.
+- Material goal, managed-book plan/lifecycle, project, HOME, and durable knowledge changes require explicit preview and approval. Factual reported reading positions update immediately under the book skill without a second approval.
 - For goal review and commitment planning, read `.agents/skills/goal/SKILL.md` fully and follow it. This optional weekly report is not the authority or prerequisite for goal planning. Goal commitments and postponement history live in the owning tickets; weekly notes reference them rather than creating a competing execution record.
 
 ## Required context
@@ -75,14 +75,7 @@ For projects receiving consequential capacity, consume their latest approved pro
 
 ## Reading review
 
-For every active or synthesis-pending managed book:
-
-- compare the approved checkpoint and minutes with the managed note's current position and any progress recorded when reading happened;
-- review useful learning evidence without requiring a note per session;
-- treat absent progress evidence as missing rather than reconstructing a nightly report;
-- propose health and test target, scope, learning contract, and active-slot value;
-- prioritize synthesis closeout by due date;
-- include proposed managed-note changes in the complete report for correction and approval.
+For every active or synthesis-pending managed book, run the book skill's Review procedure against its actual position, book-owned/shared agreements, observed pace, learning contract, verified postponements, target and slot value. Prioritize learning closeout without inventing session evidence or strikes. Include proposed material plan/lifecycle changes for approval; factual reported positions need no second approval. Review paused plans only when their reconsideration trigger or a resume decision warrants it.
 
 ## Next-week capacity and commitments
 
@@ -118,7 +111,7 @@ For a sequence, list each title-first linked ticket and its dependency; do not u
 
 ## Reading plan
 
-Build `## Next week: reading plan` separately. For each selected book record linked book, content-shaped weekly checkpoint, minimum viable checkpoint, time budget, preferred days, priority, and one-book-per-day rule or explicit exception. If capacity cannot support the target, require an explicit choice rather than silently increasing daily minutes.
+When this optional report includes `## Next week: reading plan`, use it for recommendations or links to authoritative managed-book agreements, not a second live allocation. Resolve approved content output, blocks, first action, stops, displaced activity and review point through the book skill's Commit and schedule procedure. A proposed checkpoint is not an agreement. Respect the one-book-per-day default and shared capacity; target conflicts require an explicit choice, not hidden extra minutes. Record an agreed reading commitment in its owning book or shared ticket, and verify/count once.
 
 ## Weekly record
 
@@ -145,7 +138,7 @@ Keep the first screen narrative-first. Preserve user-authored content when resum
 3. Revise disputed sections directly; ask focused follow-ups only when the correction itself is ambiguous or conflicts materially with evidence.
 4. Apply separately approved ticket Capture (tickets skill) captures first, then refresh any ticket references in the weekly-record preview.
 5. Obtain final explicit approval of the weekly record and every material edit.
-6. Apply guarded changes. Record separately agreed goal commitments through the goal skill in their owning tickets, and reference them in the weekly report. Do not use legacy task-add or task-movement commands.
+6. Apply guarded changes. Record separately agreed goal/reading commitments through their skills in the authoritative ticket or managed book, and reference them in the weekly report without duplicate blocks/counters. Do not use legacy task-add or task-movement commands.
 
 ## Output contract
 
