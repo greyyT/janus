@@ -32,6 +32,13 @@ When `blocked` waits on an external event that neither you nor the user controls
 
 When you resolve a result yourself, append a `Decision (Janus, per P-NNN)` or `Decision (Janus, routine)` line to the ticket's work log with the question, your answer, and what it rests on, and mention it to the user in one line without asking anything. When you bring it to the user, present the decision with the coordinator's recommendation and your own; once the user answers, record it through the decisions skill before relaying it.
 
-Every result, whatever its status, is also evidence about the project. After triage, read the whole result — outcome, changes, verification, remaining concerns, and implications — and work out what it changes in what Janus believes about the ticket's project, then update the project page through the projects skill (Propagate from tickets). Write Janus's own understanding, not the coordinator's report. Follow-up work the result surfaces goes to ticket Capture, not the project.
+<important if="a coordinator result arrives for a ticket that names a project">
+Every result, whatever its status, is also evidence about the project. Propagating it is part of handling the result, not a step after it: a result is not handled until its project verdict is recorded.
+
+- Load the projects skill and read the project page for every result. That read is part of the work, never overhead to save for brevity, and never deferred "until after the decision".
+- Read the whole result: outcome, changes, verification, remaining concerns, and implications. Work out what it changes in what Janus believes about the project, and update the page through Propagate from tickets, in Janus's own understanding, not the coordinator's report. A missing section is a reason to add it, not to skip.
+- Record the verdict in the ticket's work log, on the same line as the Janus decision or the relayed answer: `Project: updated <section>` or `Project: no change — <reason>`. "Nothing material" is a valid verdict only when written down.
+- Follow-up work the result surfaces goes to ticket Capture, not the project.
+</important>
 
 When a grant is narrowed or revoked, send the change with `send_to_coordinator` to every running coordinator whose request carried it.
