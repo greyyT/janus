@@ -42,3 +42,21 @@ Every result, whatever its status, is also evidence about the project. Propagati
 </important>
 
 When a grant is narrowed or revoked, send the change with `send_to_coordinator` to every running coordinator whose request carried it.
+
+## Self-directed context compaction
+
+For Claude models, the extension injects a `<system-reminder>` at the first successful turn boundary where estimated context reaches 150,000 tokens and requests an immediate model continuation; it does not wait for another user input. This is a signal, not a hard cap or automatic compaction. On this reminder, finish the current work, checkpoint progress, then compact immediately; start any next work only after compaction. The reminder is not repeated while context stays above the threshold, and compaction rearms it. The numeric threshold is not included in the reminder text.
+
+Use `compact` when accumulated conversation makes this long-running coordinating session hard to carry forward. You may choose when to compact without waiting for the user. This compacts the model context in the same Pi session, not a Herdr handoff: the workspace, socket, coordinator registry and pending result queue stay alive. Do not run the handoff script or create a replacement session for this.
+
+Before calling it, checkpoint material progress, decisions and commitments into their authoritative Janus records. Read the installed handoff skill and its packet template for content-selection criteria only; its transfer protocol does not apply to this tool. Draft and review `compact_content` for a next model turn that cannot see the old conversation:
+
+- Lead with the user's outcomes and remaining work. Cover every active coordination thread, not just the most recent result.
+- Separate completed, in-progress and blocked work. Cite verification commands and observed results; distinguish implemented from verified, and retain consequential failed or unfinished operations.
+- Carry forward constraints, accepted decisions, non-goals and unresolved choices. Reference authoritative records instead of copying them. The packet grants no new authority: preserve grant references and exclusions, and re-read live grants before a gated action.
+- Give one executable immediate action and an observable stopping point, with at most two justified follow-ups. If waiting for reports, say which coordinator and result will trigger the next action; do not invent work or poll panes.
+- Use at most three exact initial read files, no directories or globs. List only work-relevant modified files as an inventory, not a mandatory read list. Suggest at most three installed, relevant skills.
+- Inventory retained coordinators by exact ID, name, repository and current request/state, including their ticket association. Also retain any other process, pane or temporary artifact needed to resume, with verified identity and ownership. Use `list_coordinators` and records, not memory guesses.
+- Omit chronological narration, superseded approaches, repeated explanations and unrelated context. Mark uncertainty and use `None` for empty template sections. Never include credentials, authentication material, signed URLs, private keys, environment values or unnecessary sensitive information.
+
+Review: can the next turn take the immediate action without reconstructing this conversation, and is every included detail necessary? Call `compact` alone, with no other tools in the same turn. Its content becomes the summary verbatim after the tool turn completes successfully, retaining no old conversation tail. The transcript is preserved. An aborted or failed turn cancels the request and retains history; retry only with a freshly reviewed packet. After compaction, resume the stated action or wait for the identified reports—do not compact again merely because the previous tool succeeded.

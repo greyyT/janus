@@ -7,6 +7,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
+import { coordinateCompaction } from "./compact.ts";
 
 type Workspace = { workspace_id: string; label: string };
 type Mode = { janusPane: string; workspace: Workspace };
@@ -98,6 +99,28 @@ export default function coordinate(pi: ExtensionAPI): void {
   });
 
   const registerTools = (workspace: Workspace) => {
+    const queueCompaction = coordinateCompaction(pi);
+    pi.registerTool({
+      name: "compact",
+      label: "Compact selected context",
+      description:
+        "Replace the current conversation context with your own minimal resume packet, verbatim, and continue in this same session. Follow the handoff skill's content-selection criteria, not its transfer script. Call this tool alone after checkpointing durable records; include all active coordination work, live coordinator IDs, unresolved decisions and exact next actions. Coordinator runtime state and queued reports survive. Old conversation remains in the transcript but is no longer model context.",
+      parameters: Type.Object({
+        compact_content: Type.String({
+          minLength: 1,
+          description:
+            "The complete selected-context resume packet for the next model turn: outcome, actual checkpoint and verification, constraints and decisions, precise next action and stopping point, minimal artifact references, and live resources. At most three initial read files. No secrets, chronological narration, duplicated documents or unrelated context.",
+        }),
+      }),
+      async execute(_toolCallId, { compact_content }) {
+        queueCompaction(compact_content);
+        return {
+          content: [{ type: "text", text: "Compaction queued for the end of this tool turn. The next model turn will resume from compact_content; coordination runtime state is unchanged." }],
+          details: undefined,
+        };
+      },
+    });
+
     pi.registerTool({
       name: "spawn_coordinator",
       label: "Spawn coordinator",

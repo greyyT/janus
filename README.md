@@ -66,6 +66,10 @@ Run `/coordinate` in a Janus pi session inside a Herdr pane to turn on coordinat
 
 I talk only to Janus. Coordinators report back on their own; Janus checks each result against its precedents, project direction, and grants, answers what it can, and brings me only what needs my judgment or authority. Coordinators never see tickets, and each request carries only the permissions Janus resolved for it.
 
+Janus can call `compact` with `compact_content` to replace its model context with a handoff-quality resume packet and continue autonomously in the same session. The packet is used verbatim; the coordinator registry, socket and pending reports stay alive, and the old transcript is preserved. Compaction commits at the successful tool-turn boundary; an aborted or failed turn retains the old context. This requires Pi's actionable boundary API (`turn_end` compaction drafts with `firstKeptEntryId: null`).
+
+For Claude models, estimated context of 150,000 tokens triggers a reminder at the next successful turn boundary and an immediate continuation, without waiting for user input. This is a soft compaction signal, not a hard cap: finish the current work, checkpoint, compact immediately, then start the next work. The reminder omits the numeric threshold and is not repeatedly injected while context remains above it.
+
 Coordinate mode needs `pi` and `herdr` on `PATH`.
 
 ## notifications
