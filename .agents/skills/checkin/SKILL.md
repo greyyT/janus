@@ -9,11 +9,20 @@ The check-in gets the user ready to work in under a minute of reading. It report
 
 **Test for every line:** would the user act differently, or have to go looking, without it? If not, cut it.
 
+## Gate: Dream PR first
+
+The check-in must be read from a checkout that already includes the latest Dream PR. Before gathering anything:
+
+1. Find open Dream PRs on `origin`: `gh pr list --state open --search "head:dream/" --json number,title,url,headRefName`. Do not rely on `.janus/dream/pr` alone, because it can point to an older PR.
+2. **If any are open, stop.** Do not gather and do not report. Give the user each PR's link and title, ask them to review and merge or close it, and say to come back for the check-in afterwards. Output nothing else.
+3. Once the user replies after resolving it, or if no Dream PR was open in step 1, run `git pull --rebase --autostash origin main`. Resolve conflicts with upstream as the base and re-apply the local edits on top. If a conflict changes the meaning of a record, ask the user before resolving it. If a Dream PR is still open, repeat step 2.
+4. Only then gather.
+
 ## Gather
 
 Run these reads in parallel. Do not ask the user anything until you finish gathering.
 
-1. **Dream PR.** Read the URL from `.janus/dream/pr`, then run `gh pr view <url> --json state,title,body,mergedAt`. If it is still open, it is waiting for the user. Extract only the following: changes that alter meaning (board moves, goal or project changes, new precedents), anything under "Noticed", and anything Dream was unsure about. If the file is missing or the PR is already merged with nothing new, skip this.
+1. **Dream PR.** Take the most recently merged Dream PR (`gh pr list --state merged --search "head:dream/" --limit 1 --json number,url,body,mergedAt`). Extract only the following: changes that alter meaning (board moves, goal or project changes, new precedents), anything under "Noticed", and anything Dream was unsure about. If you already reported that PR in an earlier check-in, skip this.
 2. **The last three days of work.** Read the three most recent journals in `journal/YYYY-MM-DD.md` that are before today, whatever their dates. Use them to find which tickets were touched and what was left open.
 3. **Weekly reflection.** Read `journal/weekly/<ISO-week>.md` for the current or previous week if the file exists. This workflow is deprecated, so skip it silently when no recent file exists. Never report that it is missing.
 4. **Ticket status.** Read `tickets/BOARD.md`. Then read the checkpoint and the latest work-log entries of every ticket that is:
@@ -38,7 +47,7 @@ Use this shape. Leave out any section with nothing worth saying. Do not write "N
 **Carrying over**
 - <Ticket title · ID>: stopped at <where>; next: <next move>
 
-**Dream** — <PR link>: <1–2 lines on meaning-changing edits; "safe to merge" or what to check>
+**Dream** — <PR link>: <1–2 lines on meaning-changing edits that just landed>
 
 **Today** — <busy blocks>; ~<N> focus Pomodoros left <window>
 
