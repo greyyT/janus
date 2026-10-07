@@ -10,6 +10,7 @@ Janus is a Markdown-first knowledge system and personal operating system.
 - `brain/Precedents.md` holds accepted reusable judgment, and `brain/Grants.md` holds standing authority and the list of grant-gated actions. See `docs/decisions.md`.
 - `brain/Working Model.md` holds Janus's beliefs about how the user actually works. Read it before planning, dispatching, or estimating capacity.
 - Load the `decisions` skill whenever the user answers a decision Janus brought to them, or states or changes a reusable decision, standing permission, explicit prohibition, or "from now on" behavior.
+- Load the `goal` skill when defining, activating, steering, reviewing, pausing, resuming, or closing a goal, allocating goal preparation time, or recording goal progress/postponement. Daily check-in loads it to verify agreed commitments; the user does not need to invoke a goal command.
 - Non-default Markdown files placed directly in the repository root are standalone inbox captures unless protected.
 - Root inbox notes are temporary and may be incomplete, incorrect, or unverified. Dream considers them every night and resolves those it has enough evidence for.
 - Dream (`docs/dream.md`) consolidates each day overnight and proposes every change as one pull request; merging it is the user's approval.

@@ -1,6 +1,6 @@
 ---
 name: checkin
-description: "Daily check-in: gather the last Dream PR, the past three days of work, the weekly reflection, unfinished tickets, and today's calendar, then give the user one short scannable briefing. Load when the user asks to check in or starts their day with Janus."
+description: "Daily check-in: gather the last Dream PR, recent work, unfinished tickets, active-goal commitments, and today's calendar; verify agreed goal blocks and give one short briefing. Load when the user asks to check in or starts their day with Janus."
 ---
 
 # Daily Check-in
@@ -33,6 +33,13 @@ Run these reads in parallel. Do not ask the user anything until you finish gathe
    For each one, work out where it stopped, whether that stop needs the user (a pending decision, approval, or a stop at a gate), and its next move. Verify against the ticket file, not only the journal line. When the board disagrees with the ticket's own state, report that.
 5. **Calendar.** Run `pnpm -s brain:calendar --date <today>`. Read `commands.md` first if you have not already in this session. Combine the busy blocks with the user's focus window and fixed commitments from the `<user-profile>` section and `brain/Working Model.md` to work out the real focus capacity left today, counted from the current time.
 6. **Context.** Read the current focus and goal milestone in `brain/HOME.md`, and `brain/Working Model.md` for capacity beliefs.
+7. **Goal commitments.** Read `.agents/skills/goal/SKILL.md` fully. Discover canonical active goal files and non-closed tickets linked to them, including Ready tickets not touched in recent journals. Inspect their `## Goal commitment` sections and supporting work-log evidence. Read the relevant goal records and `brain/Precedents.md`. Do not infer commitments from a ticket's age, goal metadata, or suggested focus.
+
+## Verify goal commitments
+
+After gathering, run the goal skill's Verify daily and, when applicable, Handle postponement procedures. Compare elapsed agreed blocks with recorded evidence. Missing results stay unknown; ask one focused question if needed. Record confirmed results and distinct postponements in the owning ticket, not the journal or a second counter. Show the verified count and today's agreed output/block. At three eligible postponements, apply the current P-001 rule; exceptions are recorded and replanned rather than scolded.
+
+If an active goal has no agreed commitment, surface that gap and recommend the smallest commitment decision. Do not schedule work, establish a commitment, or change the goal without approval. No historical strikes are invented, and a reschedule does not erase confirmed misses. If a result or replan needs the user's answer, finish that loop when they reply using the goal/tickets/decisions skills.
 
 ## Report
 
@@ -51,6 +58,8 @@ Use this shape. Leave out any section with nothing worth saying. Do not write "N
 
 **Today** — <busy blocks>; ~<N> focus Pomodoros left <window>
 
+**Goal commitment** — <Ticket title · ID>: <agreed output and today's block, or result needing confirmation>; <N>/3 verified postponements
+
 **Suggested focus:** <one default, why in one clause>
 
 **Noticed** (max 2, only consequential: limit breaches, stale active work, goal displacement)
@@ -62,11 +71,12 @@ Rules:
 - Do not repeat the PR body, journal lines, or anything the user said in this session.
 - Give one suggested focus, not a menu. Weigh it against the HOME milestone and the remaining capacity. Do not choose by age.
 - Judge limits only by the `tickets` skill: `autonomous` tickets never count toward the active limit. Do not use the limit text in the board footer.
-- Raise goal displacement only when there is evidence, for example several days of work that never touched the HOME goal milestone, and say it once.
-- Aim for about 15 lines in total.
+- Raise goal displacement only from evidence. Distinguish general drift from verified postponements of agreed blocks; only the latter count toward P-001. Do not duplicate the commitment assessment under Noticed.
+- When an active goal has no agreed commitment, use the Goal commitment line to say so and recommend a decision; do not show an invented zero count or block.
+- Aim for about 15 lines in ordinary briefings. Missing-result clarification or required threshold escalation must not be suppressed to meet that limit.
 
 ## After the report
 
 - If `journal/<today>.md` is missing, create it with only the `# <today>` heading. Do not copy the briefing into it.
-- Change no ticket, board, or Dream state as part of the check-in. Fix mismatches only when the user decides, using the `tickets` skill.
+- Goal verification may update ticket commitment checkpoints and append confirmed result/postponement evidence through the goal and tickets skills. Do not change board or Dream state, invent progress, or mark a whole ticket done as part of the briefing. New commitments, replacement blocks and plan changes require agreement; other state mismatches still go to the user through tickets.
 - Mark items as shown in `.janus/orientation.json` only if the orientation extension's own format makes that obvious. Otherwise leave the file alone.
