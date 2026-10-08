@@ -47,7 +47,7 @@ function launch(overrides = {}, packetPath = packet, sessionName = "Review ticke
 
 const success = launch();
 assert.equal(success.status, 0, success.stderr);
-assert.deepEqual(success.calls.map(args => args[1]), ["split", "start", "prompt", "focus", "close"]);
+assert.deepEqual(success.calls.map(args => args[1]), ["split", "start", "prompt", "close"]);
 assert.deepEqual(success.calls[0], ["pane", "split", "--pane", "test:source", "--direction", "right", "--cwd", directory, "--no-focus"]);
 const record = JSON.parse(success.stdout);
 assert.match(record.destinationName, /^[a-z][a-z0-9_-]{0,31}$/);
@@ -62,8 +62,7 @@ assert.equal(statSync(record.packetPath).mode & 0o777, 0o600);
 assert.ok(!success.calls[2][3].includes("Private resume content"));
 assert.ok(success.calls[2][3].includes("verify any recorded workflow authorization against its canonical records"));
 assert.ok(!success.calls[2][3].includes("unless the user explicitly asks"));
-assert.deepEqual(success.calls[3], ["agent", "focus", record.destinationName]);
-assert.deepEqual(success.calls[4], ["pane", "close", "test:source"]);
+assert.deepEqual(success.calls[3], ["pane", "close", "test:source"]);
 
 const coordinator = launch({ JANUS_COORDINATE_SOCKET: "/tmp/janus.sock", JANUS_COORDINATOR_ID: "a1b2c3" });
 assert.equal(coordinator.status, 0, coordinator.stderr);
@@ -72,7 +71,7 @@ assert.deepEqual(coordinator.calls[0], [
   "--env", "JANUS_COORDINATE_SOCKET=/tmp/janus.sock", "--env", "JANUS_COORDINATOR_ID=a1b2c3",
 ]);
 
-for (const stage of ["split", "start", "prompt", "focus", "close"]) {
+for (const stage of ["split", "start", "prompt", "close"]) {
   const failure = launch({ FAIL_STAGE: stage });
   assert.equal(failure.status, 1);
   assert.equal(JSON.parse(failure.stderr.split("\n").filter(Boolean).at(-1)).stage, stage);
@@ -101,4 +100,4 @@ for (const name of [null, "", "   "]) {
   assert.equal(failure.status, 1);
   assert.equal(failure.calls.length, 0);
 }
-console.log("PASS: session display name, right-pane transfer, path-only prompt, private packet, source-only final close, Janus identity carried to the destination, and 15 failure cases");
+console.log("PASS: session display name, right-pane transfer without explicit focus, path-only prompt, private packet, source-only final close, Janus identity carried to the destination, and 14 failure cases");

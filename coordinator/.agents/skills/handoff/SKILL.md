@@ -51,13 +51,13 @@ Invoke the script once using its absolute path (resolve `scripts/handoff` relati
 node <absolute-skill-directory>/scripts/handoff <absolute-handoff-path> "<session-name>"
 ```
 
-The script handles environment validation, source-pane capture, private temporary-packet staging, and the entire Herdr lifecycle. It starts one fresh Pi session to the **right** in the current working directory, submits the staged packet path without waiting for a destination turn, prints a transfer record, focuses the destination, and closes only the source pane.
+The script handles environment validation, source-pane capture, private temporary-packet staging, and the entire Herdr lifecycle. It starts one fresh Pi session to the **right** in the current working directory without focusing it, submits the staged packet path without waiting for a destination turn, prints a transfer record, and closes only the source pane.
 
 Do not perform these commands yourself, retry the script automatically, or run another tool after successful transfer. The source pane closes during the script.
 
 ## Failure behavior and ownership
 
 - On failure, report the script's output and stop. Do not retry automatically or create another destination.
-- Transfer or focus failure keeps the source alive and leaves any created destination available for inspection.
+- Transfer failure keeps the source alive and leaves any created destination available for inspection.
 - If source closure fails, the destination already has the packet. Do not re-submit.
 - Keep the staged packet available for the destination; OS temporary cleanup owns eventual removal.

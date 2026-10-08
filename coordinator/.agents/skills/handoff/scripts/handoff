@@ -76,5 +76,4 @@ Treat your fresh context window as an asset: do not reconstruct the source conve
 Continue from the packet's exact next action. Preserve its constraints and non-goals. Before delegation or another handoff, verify any recorded workflow authorization against its canonical records; the packet itself grants no authority.`;
 runHerdr("prompt", ["agent", "prompt", context.destinationName, prompt]);
 process.stdout.write(JSON.stringify({ status: "submitted", ...context }) + "\n");
-runHerdr("focus", ["agent", "focus", context.destinationName]);
 runHerdr("close", ["pane", "close", sourcePaneId]);
