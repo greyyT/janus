@@ -15,7 +15,6 @@ Janus is a Markdown-first knowledge system and personal operating system.
 - Non-default Markdown files placed directly in the repository root are standalone inbox captures unless protected.
 - Root inbox notes are temporary and may be incomplete, incorrect, or unverified. Dream considers them every night and resolves those it has enough evidence for.
 - Dream (`docs/dream.md`) consolidates each day overnight and proposes every change as one pull request; merging it is the user's approval.
-- Source code and repository-local documentation remain authoritative for code behavior.
 - `.janus/calendar/` is local optional calendar feed config read by `pnpm brain:calendar`; it is not durable knowledge.
 - `.janus/dream/` is local Dream run state and log; it is not durable knowledge.
 - `.janus/orientation.json` is local state for the daily orientation (`docs/ticket.md`); it is not durable knowledge.
@@ -37,12 +36,8 @@ Before Janus or a coordinator performs a grant-gated action (listed in `brain/Gr
 1. Read `brain/HOME.md`.
 2. Identify the relevant project page under `brain/projects/` when one exists.
 3. Search both `brain/` and root inbox notes.
-4. Read original Markdown source files, not only search snippets.
-5. Verify code-specific claims in the relevant source repository.
 
-<important if="you are about to run any command declared in package.json">
-Read `commands.md` first. Use it as the local command contract for available scripts, variables, defaults, and required argument shapes before invoking the package command.
-</important>
+`commands.md` is the local command contract for available scripts, variables, defaults, and required argument shapes.
 
 ## Capturing knowledge
 
