@@ -94,20 +94,31 @@ When `brain/archive/inbox/<name>` already exists, keep the note and say why. For
 
 ## MEMORY.md
 
-`MEMORY.md` in the root is a rolling memory of the last 7 days. Every Janus session loads it into its system prompt, so it tells tomorrow's Janus what has been on the user's mind without reading old journals. Rewrite it in full on every run from your inputs, the previous `MEMORY.md`, and the last 7 days of `journal/`; drop anything older than 7 days unless it is still open.
+`MEMORY.md` in the root is Janus's episodic memory. Every Janus session loads it into its system prompt as a `<memory>` block, so a new session knows what recently happened across sessions without reading old journals and transcripts. It preserves continuity between sessions; it does not duplicate ticket, board, or project state. It is a lower-authority navigation aid: repository sources always win.
 
-It holds what the canonical records do not surface on their own:
+Rewrite it in full on every run from your inputs, the previous `MEMORY.md`, and recent `journal/` days. Keep exactly these three sections:
 
-- **Open threads**: what the user is thinking about, worrying about, or left unresolved, with the date last discussed.
-- **Recent decisions and why**: the last few that shape upcoming work, linking the record that owns each.
-- **Stated but not done**: what the user said matters that has not happened yet.
-- **Recurring topics**: what kept coming up across days.
+```md
+Updated through YYYY-MM-DD.
+
+## Recent work
+- <project> (YYYY-MM-DD): significant progress, discoveries, and changes in understanding. [[source]]
+
+## Open threads
+- (YYYY-MM-DD) unresolved question, pending investigation, or important follow-up. [[source]]
+
+## Recent decisions and why
+- (YYYY-MM-DD) decision; rationale; rejected alternatives when relevant. [[source]]
+```
 
 Rules:
 
-- At most 500 words. Start with `Updated through YYYY-MM-DD.` One line per item, each with a date and a link to the owning file when one exists.
+- Prefer significance over recency. Keep an older entry while it still shapes upcoming work; remove entries that are stale, resolved, or superseded.
+- Recent work is grouped by project, one or two lines each. Summarize what changed, not task-level detail or ticket status.
+- Include dates and source references (ticket, project page, journal) where useful. Point to the owning record instead of restating it.
+- Keep the whole file to 300–600 tokens. Omit an empty section's bullets rather than padding it.
 - No board state, schedules, or today's tasks: orientation covers those. No secrets. Respect the privacy boundaries in `.pi/profile.md`.
-- Write what happened and what the user said; label anything else `[INFERENCE]`. It is a pointer into the records, never the record itself.
+- Write what happened and what the user said; label anything else `[INFERENCE]`.
 - List it under `## Changes` in the PR body in one line.
 
 ## PR body

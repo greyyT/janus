@@ -51,7 +51,7 @@ Through the skills that own each record: tickets, projects, decision lines, prec
 
 A working-model belief needs the user's explicit statement, or the same behaviour seen again under similar conditions. A single observation goes under **Noticed, not changed** in the PR body. Later dreams read those sections from the dream PRs of the previous 30 days to find repetitions, so the PR history is the record of earlier sightings; nothing else is stored.
 
-Every run also rewrites `MEMORY.md`, a rolling memory of the last 7 days that `.pi/extensions/environment.ts` loads into every session's system prompt as a `<memory>` block. Like any change, it reaches sessions only after the PR is merged.
+Every run also rewrites `MEMORY.md`, Janus's episodic memory (recent work by project, open threads, recent decisions and why, 300–600 tokens) that `.pi/extensions/environment.ts` loads into every session's system prompt as a `<memory>` block. Like any change, it reaches sessions only after the PR is merged.
 
 Every root note is considered, but not every note is resolved: Dream promotes and archives it, archives it, deletes it, or keeps it unresolved. A kept note goes back to the root, stays out of the PR, and is listed with its SHA-1 in `.janus/dream/kept`; later dreams leave it out until the user changes it.
 
