@@ -1,6 +1,6 @@
 # Weekly review
 
-The weekly review looks at the ISO week that just ended as a whole: outcomes, tickets, displacement, goals, reading, and what next week can hold. It runs on its own and hands everything to the user as one pull request, like Dream. The user reads the PR, then goes through it with Janus (`weekly-review` skill). Merging is approval.
+The weekly review looks at the ISO week that just ended as a whole: outcomes, tickets, displacement, goals, reading, and what next week can hold. It runs on its own and hands everything to the user as one pull request, like Dream. The user reads the PR, then goes through it with Janus, following `## Discussing the PR` in `tools/weekly/prompt.md`. Merging is approval.
 
 The instructions for the run are `tools/weekly/prompt.md`. This document explains the setup around it.
 

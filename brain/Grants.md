@@ -45,7 +45,7 @@ The coordinator's copy of this list is in `coordinator/.pi/SYSTEM.md`, because c
 ### Weekly review commits and opens its PR · G-004
 
 - scope: global
-- allows: during a weekly run (`tools/weekly/weekly.sh`), committing in its worktree, pushing `weekly/*` branches, opening the weekly PR, removing its worktree and local branch afterwards; in a `weekly-review` conversation, committing and pushing changes Greyy agreed to the open `weekly/*` branch and updating its PR body
+- allows: during a weekly run (`tools/weekly/weekly.sh`), committing in its worktree, pushing `weekly/*` branches, opening the weekly PR, removing its worktree and local branch afterwards; while discussing the weekly PR, committing and pushing changes Greyy agreed to the open `weekly/*` branch and updating its PR body
 - excludes: merging the weekly PR; pushing to `main`; force-pushing
 - uses: unlimited
 - expires: until revoked

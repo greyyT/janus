@@ -24,7 +24,7 @@ Run these reads in parallel. Do not ask the user anything until you finish gathe
 
 1. **Dream PR.** Take the most recently merged Dream PR (`gh pr list --state merged --search "head:dream/" --limit 1 --json number,url,body,mergedAt`). Extract only the following: changes that alter meaning (board moves, goal or project changes, new precedents), anything under "Noticed", and anything Dream was unsure about. If you already reported that PR in an earlier check-in, skip this.
 2. **The last three days of work.** Read the three most recent journals in `journal/YYYY-MM-DD.md` that are before today, whatever their dates. Use them to find which tickets were touched and what was left open.
-3. **Weekly review.** Check for an open weekly PR (`gh pr list --state open --search "head:weekly/" --json url,title`). If one is open and not yet discussed, say so in one line and offer to go through it (`weekly-review` skill). Otherwise read the merged `journal/weekly/<ISO-week>.md` for the current or previous week if it exists, for its agreed outcomes. Skip silently when neither exists.
+3. **Weekly review.** Check for an open weekly PR (`gh pr list --state open --search "head:weekly/" --json url,title`). If one is open and not yet discussed, say so in one line and offer to go through it (`## Discussing the PR` in `tools/weekly/prompt.md`). Otherwise read the merged `journal/weekly/<ISO-week>.md` for the current or previous week if it exists, for its agreed outcomes. Skip silently when neither exists.
 4. **Ticket status.** Read `tickets/BOARD.md`. Then read the checkpoint and the latest work-log entries of every ticket that is:
    - in Active or Verifying;
    - touched in the last three journals and not Done or Dropped;

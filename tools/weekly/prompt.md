@@ -118,3 +118,15 @@ Greyy reads this first, and it opens the conversation. Keep the tone of a Dream 
 ```
 
 Put next week's proposed outcomes first under **To discuss**, as one topic: at most three, each with `ticket`, `outcome`, `done_when`, and `first step`, and the capacity they assume. Omit an empty section, except `## The week` and `## Covered`.
+
+## Discussing the PR
+
+Not part of the run. A live Janus session reads this section when Greyy reads, questions, or answers an open weekly PR, or check-in finds one.
+
+1. Read the PR (`gh pr list --state open --search "head:weekly/" --json number,url,headRefName,body`), its diff (`gh pr diff <number>`), and the live records each topic touches. Things may have moved since Monday 04:00.
+2. Go topic by topic: **To discuss**, then **Needs your judgment**. Lead with the PR's recommendation. Do not re-explain the PR.
+3. Next week's outcomes: agree each one, or fewer. Goal- or book-linked ones go through the `goal` or `book` skill's Commit and schedule. Record agreed commitments in the owning ticket or book. New tickets and calendar writes follow their own skills and approval.
+4. Other answers: apply through the skill that owns the record, and record decisions with the `decisions` skill. Changes on `main` are ordinary edits in the main checkout; Dream picks them up.
+5. A rejected or reworded proposal must change on the branch before merging. Edit through a worktree, never the main checkout: `git fetch origin && git worktree add /tmp/janus-weekly-edit origin/<branch>`. Commit, push to `<branch>`, update the PR body to match (`gh pr edit <number> --body-file <file>`), then remove the worktree.
+6. A disputed fact: check the evidence. Fix it when Greyy is right. Keep an evidence-backed disagreement and say why, once.
+7. End with what was agreed, what changed on the branch, and whether the PR is ready to merge. Never merge it.
