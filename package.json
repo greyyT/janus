@@ -16,6 +16,9 @@
     "dream": "tools/dream/dream.sh",
     "dream:install": "tools/dream/install.sh",
     "dream:input": "tsx tools/dream/input.ts",
+    "weekly": "tools/weekly/weekly.sh",
+    "weekly:install": "tools/weekly/install.sh",
+    "weekly:input": "tsx tools/weekly/input.ts",
     "test": "vitest run"
   },
   "devDependencies": {

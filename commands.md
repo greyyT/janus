@@ -22,6 +22,9 @@ pnpm <script> -- <variables>
 | `dream` | `tools/dream/dream.sh` | `catch-up`, `--dry-run`, `--prompt PATH` (no `--`) |
 | `dream:install` | `tools/dream/install.sh` | none |
 | `dream:input` | `tsx tools/dream/input.ts` | `--days "YYYY-MM-DD …"`, `--changes COMMIT`, `--notes-dir PATH` |
+| `weekly` | `tools/weekly/weekly.sh` | `catch-up`, `--dry-run`, `--prompt PATH` (no `--`) |
+| `weekly:install` | `tools/weekly/install.sh` | none |
+| `weekly:input` | `tsx tools/weekly/input.ts` | `--week YYYY-Www`, `--sunday YYYY-MM-DD`, `--dir PATH` |
 | `test` | `vitest run` | Janus defines none; pass Vitest args after `--`. |
 
 ## Variables
@@ -78,6 +81,20 @@ pnpm <script> -- <variables>
 - `--dry-run`: dream the latest day on a throwaway worktree holding a copy of the uncommitted changes; writes `input.md`, `pr-body.md`, `kept-notes.txt`, and `dream.diff` to `.janus/dream/dry-run/<time>-<prompt>/` and prints the paths. Nothing moves, commits, or pushes, and `.janus/dream/last` is unchanged.
 - `catch-up`: report an unseen failed dream, or when a day is due, move the uncommitted changes and finish in the background. Run by `.pi/extensions/dream` before each prompt; pass it as `pnpm dream catch-up`.
 - Writes state and logs to `.janus/dream/`. See `docs/dream.md`.
+
+### `weekly`
+
+- Without arguments: review the last finished ISO week if it is due; this is what launchd runs Monday 04:00. Run it as `pnpm weekly`.
+- `catch-up`: report an unseen failed review, or when a week is due, start it in the background. Run by `.pi/extensions/weekly` before each prompt.
+- `--dry-run`: review the last finished week on a throwaway worktree; writes `input.md`, `pr-body.md`, and `weekly.diff` to `.janus/weekly/dry-run/<time>-<prompt>/`. Nothing commits or pushes, and `.janus/weekly/last` is unchanged.
+- `--prompt PATH`: use another prompt file instead of `tools/weekly/prompt.md`.
+- Writes state and logs to `.janus/weekly/`. See `docs/weekly.md`.
+
+### `weekly:input`
+
+- `--week YYYY-Www` and `--sunday YYYY-MM-DD`: required; the ISO week and its Sunday.
+- `--dir PATH`: where journals are read. Default: the Janus root.
+- Prints the week's journals, dream PRs, commits on `origin/main`, Janus sessions, the previous weekly PR, and the next seven days of calendar.
 
 ### `dream:install`
 

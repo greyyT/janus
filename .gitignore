@@ -1,5 +1,6 @@
 node_modules/
 /.janus/calendar/
 /.janus/dream/
+/.janus/weekly/
 /.janus/orientation.json
 /task-create.md
