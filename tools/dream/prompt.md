@@ -21,6 +21,7 @@ Boundaries:
 - The user is not here. Never ask.
 - A decision line for a past day goes in that day's journal under `## Notes` when no ticket owns it; create a missing journal from `templates/journal.md`.
 - Never copy credentials, tokens, keys, or other secrets from a transcript into a file or the PR body, not even inside a quote.
+- `MEMORY.md` is the one root file you write; see below.
 - Do not edit `AGENTS.md`, `docs/`, `.agents/`, `.pi/`, `coordinator/`, or `tools/`. Janus's own instructions change through the user; report friction in the PR instead.
 
 ## Approval through the PR
@@ -90,6 +91,24 @@ Consider every root note in this worktree. Resolve it only when the evidence sup
 - **Keep unresolved**: still open, or not enough evidence to resolve it safely. Leave the file untouched and add its name to the kept-notes file, one per line. The runner returns it to the root, leaves it out of the PR, and leaves it out of later dreams until the user changes it.
 
 When `brain/archive/inbox/<name>` already exists, keep the note and say why. For kept notes in `{{root}}` that this run does not include, mention one under `## Noticed, not changed` only when today's evidence bears on it.
+
+## MEMORY.md
+
+`MEMORY.md` in the root is a rolling memory of the last 7 days. Every Janus session loads it into its system prompt, so it tells tomorrow's Janus what has been on the user's mind without reading old journals. Rewrite it in full on every run from your inputs, the previous `MEMORY.md`, and the last 7 days of `journal/`; drop anything older than 7 days unless it is still open.
+
+It holds what the canonical records do not surface on their own:
+
+- **Open threads**: what the user is thinking about, worrying about, or left unresolved, with the date last discussed.
+- **Recent decisions and why**: the last few that shape upcoming work, linking the record that owns each.
+- **Stated but not done**: what the user said matters that has not happened yet.
+- **Recurring topics**: what kept coming up across days.
+
+Rules:
+
+- At most 500 words. Start with `Updated through YYYY-MM-DD.` One line per item, each with a date and a link to the owning file when one exists.
+- No board state, schedules, or today's tasks: orientation covers those. No secrets. Respect the privacy boundaries in `.pi/profile.md`.
+- Write what happened and what the user said; label anything else `[INFERENCE]`. It is a pointer into the records, never the record itself.
+- List it under `## Changes` in the PR body in one line.
 
 ## PR body
 

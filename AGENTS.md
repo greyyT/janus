@@ -15,6 +15,7 @@ Janus is a Markdown-first knowledge system and personal operating system.
 - Non-default Markdown files placed directly in the repository root are standalone inbox captures unless protected.
 - Root inbox notes are temporary and may be incomplete, incorrect, or unverified. Dream considers them every night and resolves those it has enough evidence for.
 - Dream (`docs/dream.md`) consolidates each day overnight and proposes every change as one pull request; merging it is the user's approval.
+- `MEMORY.md` is Dream's rolling 7-day memory (open threads, recent decisions, stated-but-not-done), loaded into every session's system prompt. It is generated navigation, not evidence: verify the owning record before acting on it. Only Dream rewrites it.
 - `.janus/calendar/` is local optional calendar feed config read by `pnpm brain:calendar`; it is not durable knowledge.
 - `.janus/dream/` is local Dream run state and log; it is not durable knowledge.
 - `.janus/orientation.json` is local state for the daily orientation (`docs/ticket.md`); it is not durable knowledge.

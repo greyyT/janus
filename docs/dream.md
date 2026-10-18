@@ -51,6 +51,8 @@ Through the skills that own each record: tickets, projects, decision lines, prec
 
 A working-model belief needs the user's explicit statement, or the same behaviour seen again under similar conditions. A single observation goes under **Noticed, not changed** in the PR body. Later dreams read those sections from the dream PRs of the previous 30 days to find repetitions, so the PR history is the record of earlier sightings; nothing else is stored.
 
+Every run also rewrites `MEMORY.md`, a rolling memory of the last 7 days that `.pi/extensions/environment.ts` loads into every session's system prompt as a `<memory>` block. Like any change, it reaches sessions only after the PR is merged.
+
 Every root note is considered, but not every note is resolved: Dream promotes and archives it, archives it, deletes it, or keeps it unresolved. A kept note goes back to the root, stays out of the PR, and is listed with its SHA-1 in `.janus/dream/kept`; later dreams leave it out until the user changes it.
 
 Merging is approval. When a skill would normally propose and wait for the user, such as a precedent's wording, Dream writes the exact change on its branch and lists it under **Needs your judgment**. It stays non-canonical until the merge, and closing the PR rejects it. Dream never records approval as given: a precedent says `approved: by merging dream PR <branch>`, which only becomes true on `main`. The PR body describes every change, why, and its evidence, so it can be judged without opening files.
