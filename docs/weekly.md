@@ -36,7 +36,9 @@ Three levels, so nothing that needs the user happens without them:
 
 1. **Written:** the weekly record `journal/weekly/YYYY-Www.md`, and factual corrections where a record contradicts stronger evidence. Listed under **Changes**.
 2. **Proposed on the branch:** changes a skill would preview, such as a goal's plan or dropping a stale ticket. Listed under **Needs your judgment**. Merging accepts them, closing the PR rejects them.
-3. **Suggested only:** next week's outcomes, commitments, new tickets, calendar blocks. Nothing is written. Listed under **To discuss**, each with a recommendation. They are settled in conversation.
+3. **Suggested only:** next week's outcomes, commitments, new tickets, calendar blocks. Nothing is written. Outcomes are listed under **Next week**, everything else under **To discuss**, each with a recommendation. They are settled in conversation.
+
+The agreed outcomes are written on the branch as `## Week outcomes` in the weekly record before merging. That section is the source of truth for the week: daily check-in will not plan a day until it exists, and every day's suggested focus must serve it or name what displaces it.
 
 ## Trying a prompt
 

@@ -9,14 +9,18 @@ The check-in gets the user ready to work in under a minute of reading. It report
 
 **Test for every line:** would the user act differently, or have to go looking, without it? If not, cut it.
 
-## Gate: Dream PR first
+## Gate: Dream PR, then weekly review
 
-The check-in must be read from a checkout that already includes the latest Dream PR. Before gathering anything:
+The check-in must be read from a checkout that already includes the latest Dream PR and, from Monday on, the current week's agreed weekly outcomes. Before gathering anything:
 
 1. Find open Dream PRs on `origin`: `gh pr list --state open --search "head:dream/" --json number,title,url,headRefName`. Do not rely on `.janus/dream/pr` alone, because it can point to an older PR.
 2. **If any are open, stop.** Do not gather and do not report. Give the user each PR's link and title, ask them to review and merge or close it, and say to come back for the check-in afterwards. Output nothing else.
 3. Once the user replies after resolving it, or if no Dream PR was open in step 1, run `git pull --rebase --autostash origin main`. Resolve conflicts with upstream as the base and re-apply the local edits on top. If a conflict changes the meaning of a record, ask the user before resolving it. If a Dream PR is still open, repeat step 2.
-4. Only then gather.
+4. **Weekly review.** The current week's outcomes come from the weekly review of the last finished ISO week (`journal/weekly/<last-week>.md`, `## Week outcomes`).
+   - If a weekly PR is open (`gh pr list --state open --search "head:weekly/" --json number,url,title`), do not gather. Go through it with the user now, following `## Discussing the PR` in `tools/weekly/prompt.md`, until the week's outcomes are agreed and written on the branch. Ask them to merge it, then pull and continue.
+   - If no PR is open and the record for the last finished week is missing on `main`, check whether a review is running or due (`ps` for `tools/weekly/weekly.sh`, the tail of `.janus/weekly/weekly.log`). If it is running, say the check-in is paused until its PR opens. If it failed or was skipped, say so and ask the user whether to agree this week's outcomes directly in the check-in instead (through the goal, book and tickets skills' Commit steps); record them in `journal/weekly/<last-week>.md` only with that approval.
+   - If the record exists but has no `## Week outcomes` section, the outcomes were never agreed: surface that under Needs you with a recommended set of at most three, rather than planning the day without a week goal.
+5. Only then gather.
 
 ## Gather
 
@@ -24,7 +28,7 @@ Run these reads in parallel. Do not ask the user anything until you finish gathe
 
 1. **Dream PR.** Take the most recently merged Dream PR (`gh pr list --state merged --search "head:dream/" --limit 1 --json number,url,body,mergedAt`). Extract only the following: changes that alter meaning (board moves, goal or project changes, new precedents), anything under "Noticed", and anything Dream was unsure about. If you already reported that PR in an earlier check-in, skip this.
 2. **The last three days of work.** Read the three most recent journals in `journal/YYYY-MM-DD.md` that are before today, whatever their dates. Use them to find which tickets were touched and what was left open.
-3. **Weekly review.** Check for an open weekly PR (`gh pr list --state open --search "head:weekly/" --json url,title`). If one is open and not yet discussed, say so in one line and offer to go through it (`## Discussing the PR` in `tools/weekly/prompt.md`). Otherwise read the merged `journal/weekly/<ISO-week>.md` for the current or previous week if it exists, for its agreed outcomes. Skip silently when neither exists.
+3. **Week outcomes.** Read `## Week outcomes` in the merged weekly record that the gate resolved. These are the source of truth for what this week is for. For each outcome, read its owning ticket or book and work out its evidence so far, what remains, and how many workdays are left in the week. Note the record's `Practice` list as options for today's allocation, not obligations.
 4. **Ticket status.** Read `tickets/BOARD.md`. Then read the checkpoint and the latest work-log entries of every ticket that is:
    - in Active or Verifying;
    - touched in the last three journals and not Done or Dropped;
@@ -61,6 +65,8 @@ Use this shape. Leave out any section with nothing worth saying. Do not write "N
 
 **Dream** — <PR link>: <1–2 lines on meaning-changing edits that just landed>
 
+**Week** — <per outcome: title · ID, on track / at risk / done, one clause of evidence>
+
 **Today** — <busy blocks>; ~<N> focus Pomodoros left <window>
 
 **Commitments**
@@ -77,7 +83,8 @@ Rules:
 - "Needs you" comes first and contains only items blocked on the user. Put a recommendation on each one, so the user can answer with one word.
 - Cap "Carrying over" at about five lines. Merge tickets that stopped for the same reason.
 - Do not repeat the PR body, journal lines, or anything the user said in this session.
-- Give one suggested focus, not a menu. Weigh it against the HOME milestone and the remaining capacity. Do not choose by age.
+- Daily planning serves the week outcomes. The suggested focus, commitment proposals and reading proposal must each advance a week outcome, or name the genuine urgency that displaces it and which outcome loses time. An outcome at risk with days running out is a Needs-you item: recommend cutting scope, protecting a block, or explicitly dropping it from the week. Practice sessions are allocation options: suggest one when it fits today's capacity, and record a session only when the user reports it. Never list them as a checklist, ask about every one, or count a missed one as a postponement.
+- Give one suggested focus, not a menu. Weigh it against the week outcomes, the HOME milestone and the remaining capacity. Do not choose by age.
 - Judge limits only by the `tickets` skill: `autonomous` tickets never count toward the active limit. Do not use the limit text in the board footer.
 - Raise goal/reading displacement only from evidence. Distinguish general drift from verified postponements of agreed blocks; only the latter count toward P-001. Do not duplicate the commitment assessment under Noticed or report a shared agreement twice.
 - When an active goal or managed reading/closeout plan has no agreed commitment, say so under Commitments and recommend a decision; do not show an invented zero count or block. Keep paused plans and recreational reading out of daily demands.
