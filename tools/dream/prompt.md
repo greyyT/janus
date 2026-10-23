@@ -96,7 +96,7 @@ When `brain/archive/inbox/<name>` already exists, keep the note and say why. For
 
 `MEMORY.md` in the root is Janus's episodic memory. Every Janus session loads it into its system prompt as a `<memory>` block, so a new session knows what recently happened across sessions without reading old journals and transcripts. It preserves continuity between sessions; it does not duplicate ticket, board, or project state. It is a lower-authority navigation aid: repository sources always win.
 
-Rewrite it in full on every run from your inputs, the previous `MEMORY.md`, and recent `journal/` days. Keep exactly these three sections:
+It is a rolling 7-calendar-day snapshot, not an append-only history. The window is the 7 days ending on the last dreamed day. Rewrite it in full on every run from your inputs, the previous `MEMORY.md`, and the `journal/` days in the window. Keep exactly these three sections:
 
 ```md
 Updated through YYYY-MM-DD.
@@ -113,12 +113,16 @@ Updated through YYYY-MM-DD.
 
 Rules:
 
-- Prefer significance over recency. Keep an older entry while it still shapes upcoming work; remove entries that are stale, resolved, or superseded.
+- Reconcile every existing entry against the evidence; never carry one forward unchecked.
+- Keep only events that happened inside the window. Remove expired entries; never refresh an entry's date to keep it alive. Each entry's date is when the event happened.
+- An unresolved ticket, board item, goal, or project is not a new episode. Long-lived state lives in its canonical record; an entry appears only when something happened to it inside the window, dated then.
+- Consolidate by project or thread: one entry carrying the latest meaningful development and the context needed to read it. Replace superseded information and merge duplicate threads and decisions.
+- Keep significant decisions and their rationale while they are inside the window; durable ones also belong in canonical knowledge (precedents, tickets, project pages).
 - Recent work is grouped by project, one or two lines each. Summarize what changed, not task-level detail or ticket status.
 - Include dates and source references (ticket, project page, journal) where useful. Point to the owning record instead of restating it.
 - Keep the whole file to 300–600 tokens. Omit an empty section's bullets rather than padding it.
 - No board state, schedules, or today's tasks: orientation covers those. No secrets. Respect the privacy boundaries in `.pi/profile.md`.
-- Write what happened and what the user said; label anything else `[INFERENCE]`.
+- Write what happened and what the user said; label anything else `[INFERENCE]`. Never add a fact without a source; keep the Obsidian `[[source]]` links.
 - List it under `## Changes` in the PR body in one line.
 
 ## PR body
