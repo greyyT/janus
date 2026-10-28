@@ -8,11 +8,12 @@ import { fileURLToPath } from "node:url";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { coordinateCompaction } from "./compact.ts";
+import { footerLines, type CoordinatorView } from "./footer.ts";
 
 type Workspace = { workspace_id: string; label: string };
 type Mode = { janusPane: string; workspace: Workspace };
 type TabCreated = { tab: { tab_id: string }; root_pane: { pane_id: string } };
-type Coordinator = { name: string; repo: string; tabId: string; paneId: string };
+type Coordinator = CoordinatorView & { repo: string; tabId: string; paneId: string };
 
 const NEW_WORKSPACE = "New workspace…";
 const COORDINATOR_DIR = fileURLToPath(new URL("../../../coordinator", import.meta.url));
@@ -29,6 +30,8 @@ const COORDINATE_MODE_PROMPT = new URL("coordinate-mode.md", import.meta.url);
 export default function coordinate(pi: ExtensionAPI): void {
   let mode: Mode | undefined;
   let server: Server | undefined;
+  let footerTimer: ReturnType<typeof setInterval> | undefined;
+  let requestFooterRender = () => {};
   let isJanusIdle = () => false;
   let lastOutcome: string | undefined;
   const coordinators = new Map<string, Coordinator>();
@@ -48,7 +51,7 @@ export default function coordinate(pi: ExtensionAPI): void {
   // A coordinator sends `{ id, pane }` when a session starts, including the
   // fresh session a handoff creates, and `{ id, result }` at each stop.
   const receiveReport = (payload: string, ctx: ExtensionCommandContext) => {
-    let report: { id: string; result?: string; pane?: string };
+    let report: { id: string; result?: string; pane?: string; activity?: "working" | "tool" | "idle" | "usage"; tool?: string; percent?: number | null };
     try {
       report = JSON.parse(payload);
     } catch {
@@ -56,14 +59,29 @@ export default function coordinate(pi: ExtensionAPI): void {
       return;
     }
     const coordinator = coordinators.get(report.id);
+    if (!coordinator) return;
     if (report.pane !== undefined) {
-      if (coordinator && coordinator.paneId !== report.pane) {
+      if (coordinator.paneId !== report.pane) {
         coordinator.paneId = report.pane;
         ctx.ui.notify(`Coordinator ${report.id} (${coordinator.name}) continues in pane ${report.pane}.`, "info");
       }
       return;
     }
-    pendingResults.push(`<coordinator_result id="${report.id}" name="${coordinator?.name ?? "unknown"}">\n${report.result}\n</coordinator_result>`);
+    if (report.activity) {
+      if (typeof report.percent === "number" && Number.isFinite(report.percent)) coordinator.percent = report.percent;
+      if (report.activity === "working") { coordinator.state = "working"; coordinator.activity = "Working"; }
+      if (report.activity === "tool" && typeof report.tool === "string") { coordinator.state = "working"; coordinator.activity = report.tool; }
+      if (report.activity === "idle") { coordinator.state = "idle"; coordinator.activity = "Idle"; }
+      requestFooterRender();
+      return;
+    }
+    if (typeof report.result !== "string") return;
+    const status = /^STATUS: (completed|blocked|needs_input|failed)$/m.exec(report.result)?.[1];
+    coordinator.state = status === "failed" ? "failed" : status === "blocked" ? "blocked" : status === "needs_input" ? "needs_input" : "completed";
+    const reason = status === "failed" ? /^OUTCOME:\s*\n([^\n]+)/m.exec(report.result)?.[1] : undefined;
+    coordinator.activity = reason ? reason.slice(0, 160) : status === "completed" ? "Report ready" : status === "blocked" ? "Blocked" : status === "needs_input" ? "Needs input" : "Failed";
+    requestFooterRender();
+    pendingResults.push(`<coordinator_result id="${report.id}" name="${coordinator.name}">\n${report.result}\n</coordinator_result>`);
     if (isJanusIdle()) deliverNextResult();
   };
 
@@ -95,6 +113,7 @@ export default function coordinate(pi: ExtensionAPI): void {
     if (lastOutcome === "completed") deliverNextResult();
   });
   pi.on("session_shutdown", () => {
+    if (footerTimer) clearInterval(footerTimer);
     server?.close();
   });
 
@@ -143,7 +162,8 @@ export default function coordinate(pi: ExtensionAPI): void {
           ],
           signal,
         );
-        coordinators.set(id, { name, repo, tabId: tab.tab_id, paneId: pane.pane_id });
+        coordinators.set(id, { name, repo, tabId: tab.tab_id, paneId: pane.pane_id, startedAt: Date.now(), state: "idle", activity: "Starting" });
+        requestFooterRender();
         await sleep(TAB_STARTUP_MS, undefined, { signal });
         await herdr(["pane", "run", pane.pane_id, "pi"], signal);
         await sleep(PI_STARTUP_MS, undefined, { signal });
@@ -200,6 +220,7 @@ export default function coordinate(pi: ExtensionAPI): void {
         const { name, tabId } = findCoordinator(id);
         await herdr(["tab", "close", tabId], signal);
         coordinators.delete(id);
+        requestFooterRender();
         return { content: [{ type: "text", text: `Stopped ${id} (${name}) and closed tab ${tabId}.` }], details: undefined };
       },
     });
@@ -271,6 +292,17 @@ export default function coordinate(pi: ExtensionAPI): void {
       }
       isJanusIdle = () => ctx.isIdle();
       mode = { janusPane, workspace };
+      ctx.ui.setFooter((tui, theme) => {
+        requestFooterRender = () => tui.requestRender();
+        return {
+          render: (width: number) => footerLines(coordinators.values(), width, Date.now(), (icon, state) =>
+            theme.fg(state === "working" || state === "completed" ? "success" : state === "failed" ? "error" : state === "idle" ? "muted" : "warning", icon)),
+          invalidate: () => tui.requestRender(),
+          dispose: () => { requestFooterRender = () => {}; },
+        };
+      });
+      footerTimer = setInterval(() => requestFooterRender(), 600);
+      footerTimer.unref();
       // Marks the transcript so Dream ignores everything from here on (tools/brain/lib/sessions.ts).
       pi.appendEntry("janus-coordinate");
       registerTools(workspace);
