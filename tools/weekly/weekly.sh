@@ -97,7 +97,7 @@ run() {
     log "dream running; weekly review of $WEEK postponed"
     exit 0
   fi
-  if ! curl -fsS --max-time 5 -o /dev/null https://api.github.com; then
+  if ! gh api rate_limit --silent >/dev/null 2>&1; then
     log "offline; weekly review of $WEEK postponed"
     exit 0
   fi

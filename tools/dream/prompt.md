@@ -129,6 +129,13 @@ Rules:
 
 Write it so the user can judge every change without opening a file. When the previous PR body is given, write one body that covers all of its days and yours.
 
+The user reads this body, so keep the tone simple and concise:
+
+- Use short sentences, one idea each. Split any sentence that needs a semicolon or a second clause.
+- Use plain, everyday words. Drop filler and hedges such as "actually", "in order to", "it is worth noting".
+- Say each fact once. Do not restate the change in `why` or `merging means`.
+- Keep quotes and identifiers exact, but quote only the words that carry the evidence.
+
 ```md
 ## Needs your judgment
 

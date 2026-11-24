@@ -42,7 +42,7 @@
   },
   "plan-reviewer": {
     "kind": "omp",
-    "model": "kiro/gpt-5.6-sol",
+    "model": "openai-codex/gpt-6-sol",
     "effort": null,
     "args": ["--thinking=xhigh"],
     "role": "plan-reviewer",
@@ -50,7 +50,7 @@
   },
   "reviewer-minimal": {
     "kind": "omp",
-    "model": "kiro/gpt-5.6-sol",
+    "model": "opus",
     "effort": null,
     "args": ["--thinking=low"],
     "role": "reviewer",
@@ -58,7 +58,7 @@
   },
   "reviewer-medium": {
     "kind": "omp",
-    "model": "kiro/gpt-5.6-sol",
+    "model": "opus",
     "effort": null,
     "args": ["--thinking=medium"],
     "role": "reviewer",
@@ -66,7 +66,7 @@
   },
   "reviewer-high": {
     "kind": "omp",
-    "model": "kiro/gpt-5.6-sol",
+    "model": "opus",
     "effort": null,
     "args": ["--thinking=high"],
     "role": "reviewer",

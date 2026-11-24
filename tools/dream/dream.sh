@@ -158,7 +158,7 @@ prepare() {
   if [[ -n "$last" && ! "$last" < "$target" ]]; then exit 0; fi
 
   acquire_lock
-  if ! curl -fsS --max-time 5 -o /dev/null https://api.github.com; then
+  if ! gh api rate_limit --silent >/dev/null 2>&1; then
     log "offline; dream through $target postponed"
     exit 0
   fi

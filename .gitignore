@@ -3,4 +3,7 @@ node_modules/
 /.janus/dream/
 /.janus/weekly/
 /.janus/orientation.json
+/.janus/coordinate/
+/.janus/hn/
+.obsidian/
 /task-create.md

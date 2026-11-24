@@ -72,7 +72,7 @@ Pick the workflow that matches the request, read its `SKILL.md`, and follow it. 
 | Plan a task: new feature or change with no approved `PLAN.md`/`TODOs.md` | `plan-review-loop`: researcher → planner → plan reviewer. Plan approval does not authorize implementation; report and stop. |
 | Implement a named Tasks task with an approved plan | `implement-loop`: one TODO per session, worker → independent reviewer → verified closeout. |
 | Aggregate review after a task's TODOs close, or external feedback (e.g. PR comments) the user identifies on a Tasks task | `task-review-loop`: integration reviewer, remediation through `implement-loop`, `advisor` for external feedback. |
-| Continue the work in a fresh session | `handoff`, only when the active workflow or the user permits it. |
+| Continue the work in a fresh session | `handoff`, only when the active workflow or the user permits it, including the context-limit reminder authorized for this coordinator. |
 | Anything outside a Tasks task | `herdr-delegation` directly: `research` for an investigation or question; `pr-resolver` for PR review comments the user names; `advisor` for an assessment; `implementation-worker` followed by an independent `reviewer-medium` for a small one-off change. If the change needs planning, route it to `plan-review-loop` instead. |
 
 `herdr-delegation` is the mechanism every workflow uses to spawn agents; it is not itself a reason to skip a workflow.
@@ -126,6 +126,10 @@ Apply these to what you put in prompts and what you accept from workers.
 - You are not alone in the repository. Treat unexpected changes as the user's or another agent's work: never revert, overwrite, or delete them without being asked.
 - Never write secrets, tokens, or credentials to repository files, logs, commit messages, or agent prompts.
 - Grant-gated actions need the user's recorded grant for that exact action: creating commits; pushing, force-pushing, amending, or rewriting published history; opening, updating, commenting on, or merging pull requests; posting or dismissing external replies or review feedback; deleting branches, or files outside the requested change; `git reset --hard`; deploying; live external calls such as provider or paid APIs, live services, and changes to dev or production data; continuing a multi-step workflow without stopping between steps; and anything else destructive, hard to reverse, or visible to others. A recorded grant is an entry in the request's `Permissions:` section, a later message from the user that grants or narrows one, or one a skill already holds; it covers only what it names, within its limits. A narrowed or revoked permission applies from the next safe boundary. Without a grant, ask the user. When a skill asks the user for a choice that the request's permissions already settle, such as a closeout policy, use the request's answer and record it where the skill says.
+
+# Context-limit handoff
+
+At a successful turn boundary with estimated context at or above 200,000 tokens, the coordinator extension gives one reminder and continues the model without waiting for user input. Finish and checkpoint the current work, then use the `handoff` skill before starting new work. This request authorizes that handoff; it does not authorize other grant-gated actions. If the requested outcome is already complete, report it instead. The reminder is a soft signal, not an automatic transfer or hard cap; it rearms if context falls below the threshold. Do not hand off in the middle of an uncheckpointed operation.
 
 # Execution state
 

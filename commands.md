@@ -25,6 +25,8 @@ pnpm <script> -- <variables>
 | `weekly` | `tools/weekly/weekly.sh` | `catch-up`, `--dry-run`, `--prompt PATH` (no `--`) |
 | `weekly:install` | `tools/weekly/install.sh` | none |
 | `weekly:input` | `tsx tools/weekly/input.ts` | `--week YYYY-Www`, `--sunday YYYY-MM-DD`, `--dir PATH` |
+| `hn` | `tools/hn/hn.sh` | `--force`, `--no-upload` (no `--`) |
+| `hn:install` | `tools/hn/install.sh` | none |
 | `test` | `vitest run` | Janus defines none; pass Vitest args after `--`. |
 
 ## Variables
@@ -41,6 +43,7 @@ pnpm <script> -- <variables>
 
 - `--date YYYY-MM-DD`: date to inspect. Default: today.
 - Reads configured live iCalendar feeds from `.janus/calendar/config.json`; if no feeds are configured, falls back to legacy `.janus/calendar/primary.ics` when present.
+- Also lists pending agreed commitment blocks (`- Cn-Bm:` lines in `tickets/` and `brain/reading/`) dated that day, plus blocks naming that ISO week without a fixed day. Times are printed raw for the agent to interpret. `--json` adds `agreed_blocks`.
 
 ### `brain:calendar:add`
 
@@ -89,6 +92,18 @@ pnpm <script> -- <variables>
 - `--dry-run`: review the last finished week on a throwaway worktree; writes `input.md`, `pr-body.md`, and `weekly.diff` to `.janus/weekly/dry-run/<time>-<prompt>/`. Nothing commits or pushes, and `.janus/weekly/last` is unchanged.
 - `--prompt PATH`: use another prompt file instead of `tools/weekly/prompt.md`.
 - Writes state and logs to `.janus/weekly/`. See `docs/weekly.md`.
+
+### `hn`
+
+- Without arguments: build today's Hacker News audio digest if due (from 04:00 until today has run); this is what launchd runs daily at 04:30.
+- `--force`: run now, even if today already ran. `--no-upload`: skip the upload for this run.
+- Fetches the front page, has one triage agent tier the stories by `tools/hn/interests.md` (falls back to `tools/hn/interests.example.md`; copy it to start), reads the articles through Helium (curl when it is down), has up to 6 writer agents script a two-host conversation, and renders one mp3 with Kokoro (`uv`, `ffmpeg`). Must-reads go to `## Must-read (HN)` in that day's journal.
+- Upload to YouTube Music is off unless `.janus/hn/upload` exists (needs a Helium profile signed in). `.janus/hn/disabled` pauses scheduled runs.
+- Variables: `JANUS_HN_STORIES` (default 60), `JANUS_HN_WRITERS` (6), `JANUS_HN_MODEL` (`anthropic/claude-opus-5-5`), `JANUS_HN_WRITE_TIMEOUT` seconds (1500), `JANUS_HN_DATE`. Output and logs in `.janus/hn/`.
+
+### `hn:install`
+
+- Installs or reinstalls the `com.janus.hn` launchd job (daily 04:30) for this checkout, keeping the current `PATH`.
 
 ### `weekly:input`
 

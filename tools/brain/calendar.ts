@@ -1,4 +1,4 @@
-import { formatCalendarHuman, loadCalendarDay, parseCivilDate, resolveRepositoryRoot, todayDateKey } from "./lib/index.js";
+import { formatAgreedBlocksHuman, formatCalendarHuman, loadAgreedBlocks, loadCalendarDay, parseCivilDate, resolveRepositoryRoot, todayDateKey } from "./lib/index.js";
 
 interface Options {
   date: string;
@@ -9,12 +9,15 @@ async function main(): Promise<void> {
   try {
     const options = parseArgs(process.argv.slice(2));
     const repositoryRoot = await resolveRepositoryRoot();
-    const output = await loadCalendarDay(repositoryRoot, options.date);
+    const [day, agreedBlocks] = await Promise.all([
+      loadCalendarDay(repositoryRoot, options.date),
+      loadAgreedBlocks(repositoryRoot, options.date),
+    ]);
     if (options.isJson) {
-      console.log(JSON.stringify(output, null, 2));
+      console.log(JSON.stringify({ ...day, agreed_blocks: agreedBlocks }, null, 2));
       return;
     }
-    console.log(formatCalendarHuman(output));
+    console.log(`${formatCalendarHuman(day)}\n${formatAgreedBlocksHuman(agreedBlocks)}`);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;

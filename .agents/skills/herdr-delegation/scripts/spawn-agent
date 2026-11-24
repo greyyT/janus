@@ -1,0 +1,118 @@
+#!/usr/bin/env node
+
+import { spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
+import { readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const AGENT_NAME_PATTERN = /^[a-z][a-z0-9_-]{0,31}$/;
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+const REGISTRY_PATH = join(SCRIPT_DIR, "registry.json");
+const PROMPTS_DIR = join(SCRIPT_DIR, "prompts");
+const PROMPT_TIMEOUT_MS = 3_600_000;
+const SETTLED_STATUSES = new Set(["idle", "done"]);
+
+function failValidation(message) {
+  process.stderr.write(`${message}\n`);
+  process.exit(2);
+}
+
+function failRuntime(stage, detail, context) {
+  process.stdout.write(JSON.stringify({ status: "failed", stage, error: detail, ...context }) + "\n");
+  process.exit(1);
+}
+
+const args = process.argv.slice(2);
+if (args.length !== 3) {
+  failValidation(`usage: spawn-agent <variant> <pane-id> <task-prompt-file> (received ${args.length} argument(s))`);
+}
+
+const [variant, paneId, taskPromptPath] = args;
+if (process.env.HERDR_ENV !== "1") {
+  failValidation("HERDR_ENV must be 1 to control Herdr");
+}
+if (paneId.trim() === "") {
+  failValidation("pane-id must not be empty");
+}
+
+let registry;
+try {
+  registry = JSON.parse(readFileSync(REGISTRY_PATH, "utf8"));
+} catch (error) {
+  failValidation(`cannot read registry file ${REGISTRY_PATH}: ${error.message}`);
+}
+const config = Object.hasOwn(registry, variant) && variant !== "_comment" ? registry[variant] : null;
+if (!config) {
+  failValidation(`unknown variant: ${variant}`);
+}
+
+let rolePrompt;
+let taskPrompt;
+try {
+  rolePrompt = readFileSync(join(PROMPTS_DIR, `${config.role}.md`), "utf8");
+  taskPrompt = readFileSync(taskPromptPath, "utf8");
+} catch (error) {
+  failValidation(`cannot read prompt: ${error.message}`);
+}
+if (!rolePrompt.trim() || !taskPrompt.trim()) {
+  failValidation("role and task prompt files must both be nonempty");
+}
+
+const agentName = `v2-${config.code}-${randomBytes(4).toString("hex")}`;
+if (!AGENT_NAME_PATTERN.test(agentName)) {
+  failValidation(`generated agent name is invalid: ${agentName}`);
+}
+
+// Persist the exact first-turn prompt for inspection before starting the agent.
+const composedPromptPath = join("/tmp", `janus-${agentName}-${randomBytes(4).toString("hex")}-prompt.md`);
+const composedPrompt = `<system-reminder>\n${rolePrompt}\n</system-reminder>\n\n${taskPrompt}`;
+try {
+  writeFileSync(composedPromptPath, composedPrompt, { encoding: "utf8", flag: "wx", mode: 0o600 });
+} catch (error) {
+  failValidation(`cannot stage composed prompt: ${error.message}`);
+}
+const context = { agentName, paneId, variant, composedPromptPath };
+
+function runHerdr(herdrArgs) {
+  const result = spawnSync("herdr", herdrArgs, { encoding: "utf8", shell: false });
+  if (result.stdout) process.stderr.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  return result;
+}
+
+const agentArgs = [];
+if (config.model != null) agentArgs.push("--model", config.model);
+if (config.effort != null) agentArgs.push("--effort", config.effort);
+if (Array.isArray(config.args)) agentArgs.push(...config.args);
+const startArgs = ["agent", "start", agentName, "--kind", config.kind, "--pane", paneId];
+if (agentArgs.length) startArgs.push("--", ...agentArgs);
+
+const startResult = runHerdr(startArgs);
+if (startResult.error || startResult.status !== 0) {
+  failRuntime("start", startResult.error?.message || startResult.stderr?.trim() || "herdr agent start failed", context);
+}
+
+const promptResult = runHerdr([
+  "agent", "prompt", agentName, composedPrompt, "--wait", "--timeout", String(PROMPT_TIMEOUT_MS),
+]);
+if (promptResult.error || promptResult.status !== 0) {
+  failRuntime("prompt", promptResult.error?.message || promptResult.stderr?.trim() || "herdr agent prompt failed", context);
+}
+
+// Herdr's default wait also matches blocked. Do not report a blocked turn as success.
+const getResult = runHerdr(["agent", "get", agentName]);
+if (getResult.error || getResult.status !== 0) {
+  failRuntime("status", getResult.error?.message || getResult.stderr?.trim() || "herdr agent get failed", context);
+}
+let agentStatus;
+try {
+  agentStatus = JSON.parse(getResult.stdout)?.result?.agent?.agent_status;
+} catch (error) {
+  failRuntime("status", `invalid agent get response: ${error.message}`, context);
+}
+if (!SETTLED_STATUSES.has(agentStatus)) {
+  failRuntime("status", `agent did not settle successfully (agent_status: ${agentStatus ?? "unknown"})`, context);
+}
+
+process.stdout.write(JSON.stringify({ status: "success", ...context }) + "\n");
