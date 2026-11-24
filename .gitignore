@@ -7,3 +7,4 @@ node_modules/
 /.janus/hn/
 .obsidian/
 /task-create.md
+__pycache__/
