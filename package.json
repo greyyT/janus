@@ -19,6 +19,8 @@
     "weekly": "tools/weekly/weekly.sh",
     "weekly:install": "tools/weekly/install.sh",
     "weekly:input": "tsx tools/weekly/input.ts",
+    "hn": "tools/hn/hn.sh",
+    "hn:install": "tools/hn/install.sh",
     "test": "vitest run"
   },
   "devDependencies": {
