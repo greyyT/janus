@@ -11,7 +11,9 @@
  */
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, unlink } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { createServer as createNetServer } from "node:net";
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import os from "node:os";
@@ -591,7 +593,8 @@ describe("telegram-bridge", () => {
   const { server, clientA, clientB } = await setup();
 
   await clientA.expectType("ready");
-  clientA.send("Summary A", "Plain details for A");
+  clientA.send("Summary A", "**Details** for *A* with `x < y`\n```ts\n**literal**\n```");
+  const renderedDetails = "<b>Details</b> for <i>A</i> with <code>x &lt; y</code>\n<pre>**literal**\n</pre>";
   await clientA.expectType("sent");
 
   await clientB.expectType("ready");
@@ -617,12 +620,11 @@ describe("telegram-bridge", () => {
   expect(server.answeredCallbacks()[0]!.callback_query_id).toBeTruthy();
 
   await vi.waitFor(() => {
-   expect(server.sentMessages().some((m) => m.text === "Plain details for A")).toBe(true);
+   expect(server.sentMessages().some((m) => m.text === renderedDetails)).toBe(true);
   }, { timeout: 5000 });
 
-  const detailMsg = server.sentMessages().find((m) => m.text === "Plain details for A")!;
-  // Details must be plain text (no HTML parse mode).
-  expect(detailMsg.parse_mode).toBeUndefined();
+  const detailMsg = server.sentMessages().find((m) => m.text === renderedDetails)!;
+  expect(detailMsg.parse_mode).toBe("HTML");
   // Must use current Telegram reply_parameters API.
   expect(detailMsg.reply_parameters?.message_id).toBe(summaryA._msgId);
 
@@ -703,12 +705,12 @@ describe("telegram-bridge", () => {
   }, { timeout: 5000 });
 
   await vi.waitFor(() => {
-   expect(server.sentMessages().some((m) => m.text?.startsWith("A".repeat(100)))).toBe(true);
+   expect(server.sentMessages().some((m) => m.text?.includes("&lt;/code&gt;"))).toBe(true);
   }, { timeout: 8000 });
 
   const chunks = server
    .sentMessages()
-   .filter((m) => m.text && (m.text.startsWith("A") || m.text.includes("🔥") || m.text.includes("<b>")));
+   .filter((m) => m.text && (m.text.startsWith("A") || m.text.includes("🔥") || m.text.includes("&lt;b&gt;")));
 
   for (const chunk of chunks) {
    // No chunk exceeds Telegram's 4096-char limit.
@@ -724,18 +726,12 @@ describe("telegram-bridge", () => {
    const startsLowSurrogate = firstCode >= 0xdc00 && firstCode <= 0xdfff;
    expect(startsLowSurrogate, `chunk starts on low surrogate 0x${firstCode.toString(16)}`).toBe(false);
 
-   // Plain text details must not have an HTML parse mode.
-   expect(chunk.parse_mode).toBeUndefined();
+   expect(chunk.parse_mode).toBe("HTML");
   }
 
   // Lossless reconstruction.
   const reconstructed = chunks.map((c) => c.text!).join("");
-  expect(reconstructed).toBe(longDetails);
-
-  // Literal HTML must survive unescaped.
-  expect(reconstructed).toContain("<b>bold</b>");
-  expect(reconstructed).not.toContain("&amp;");
-  expect(reconstructed).not.toContain("&lt;");
+  expect(reconstructed).toBe(prefix + emoji + "B".repeat(200) + "\n&lt;b&gt;bold&lt;/b&gt; &amp; &lt;code&gt;code&lt;/code&gt;");
  });
 
  // ── 6. auth: wrong chat ID ────────────────────────────────────────────────────
@@ -1150,6 +1146,42 @@ describe("telegram-bridge", () => {
 
   // Singleton still holds after restart.
   expect(server.getMaxConcurrentGetUpdates()).toBe(1);
+ });
+
+ // ── 17. usurped receiver exits ───────────────────────────────────────────────
+
+ test("receiver whose socket path was taken over exits instead of polling alongside the successor", { timeout: 15000 }, async () => {
+  const token = freshToken();
+  const server = await startMockServer(token);
+  const socketDir = await freshSocketDir();
+  teardowns.push(() => server.close());
+  const clientA = new BridgeClient(token, server.baseUrl, socketDir, 5000);
+  teardowns.push(() => { clientA.kill(); });
+
+  await clientA.expectType("ready");
+  clientA.send("Before takeover");
+  await clientA.expectType("sent");
+
+  const sockPath = receiverSocketPath(socketDir, token);
+  const receiverPid = findReceiverPid(sockPath, [clientA.proc.pid!]);
+  expect(receiverPid, "receiver process must be locatable").toBeTruthy();
+
+  // Simulate a successor that unlinked the path after a failed probe and bound its own socket.
+  await unlink(sockPath);
+  const squatterConns = new Set<import("node:net").Socket>();
+  const squatter = createNetServer((c) => { squatterConns.add(c); c.on("error", () => { }); });
+  await new Promise<void>((r) => squatter.listen(sockPath, () => r()));
+  teardowns.push(() => new Promise<void>((r) => {
+   for (const c of squatterConns) c.destroy();
+   squatter.close(() => r());
+  }));
+
+  await vi.waitFor(() => {
+   expect(() => process.kill(receiverPid!, 0)).toThrow();
+  }, { timeout: 8000, interval: 200 });
+
+  // The old receiver must not delete the successor's socket on its way out.
+  expect(existsSync(sockPath)).toBe(true);
  });
 
 });

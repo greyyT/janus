@@ -60,6 +60,7 @@ type Handler = (event: Record<string, unknown>, ctx: MockCtx) => Promise<void>;
 
 interface MockPi {
  on(event: string, handler: Handler): void;
+ registerCommand(name: string, options: { handler: (args: string, ctx: MockCtx) => Promise<void> }): void;
  sendUserMessage: ReturnType<typeof vi.fn>;
  events: {
   on(channel: string, handler: (data: unknown) => void): () => void;
@@ -85,6 +86,7 @@ interface MockCtx {
 
 function createHarness() {
  const handlerMap = new Map<string, Handler[]>();
+ const commands = new Map<string, (args: string, ctx: MockCtx) => Promise<void>>();
  const events = new EventEmitter();
 
  const pi: MockPi = {
@@ -93,6 +95,7 @@ function createHarness() {
    list.push(handler);
    handlerMap.set(event, list);
   },
+  registerCommand(name, options) { commands.set(name, options.handler); },
   sendUserMessage: vi.fn(),
   events: {
    on(channel, handler) { events.on(channel, handler); return () => { events.off(channel, handler); }; },
@@ -122,7 +125,9 @@ function createHarness() {
   }
  }
 
- return { pi, ctx, emit };
+ const command = (name: string, args = "") => commands.get(name)!(args, ctx);
+
+ return { pi, ctx, emit, command };
 }
 
 beforeEach(() => {
@@ -386,5 +391,86 @@ describe("notify-user extension", () => {
   await new Promise<void>((r) => setTimeout(r, 10));
 
   expect(bridge.send).not.toHaveBeenCalled();
+ });
+});
+
+describe("coordinate-mode pings and /silent", () => {
+ const coordinatorTurn = [
+  { type: "message", message: { role: "user", content: '<coordinator_result id="abc" name="x">\nSTATUS: needs_input\n</coordinator_result>' } },
+  { type: "message", message: { role: "assistant", content: [{ type: "text", text: "Recorded x: 1 item pending." }], stopReason: "end_turn" } },
+ ];
+
+ async function setup() {
+  const harness = createHarness();
+  notifyUserExtension(harness.pi as unknown as Parameters<typeof notifyUserExtension>[0]);
+  const bridge = makeBridge();
+  mockCreateBridge.mockReturnValueOnce(bridge);
+  await harness.emit("session_start");
+  return { ...harness, bridge };
+ }
+
+ test("a coordinator-triggered turn sends no done summary", async () => {
+  const { ctx, emit, bridge } = await setup();
+  ctx.sessionManager.getBranch.mockReturnValue(coordinatorTurn);
+  await emit("agent_start");
+  await emit("agent_settled");
+  await new Promise<void>((r) => setTimeout(r, 10));
+  expect(bridge.send).not.toHaveBeenCalled();
+ });
+
+ test("a failed coordinator-triggered turn still reports", async () => {
+  const { ctx, emit, bridge } = await setup();
+  ctx.sessionManager.getBranch.mockReturnValue([
+   coordinatorTurn[0],
+   { type: "message", message: { role: "assistant", content: [], stopReason: "error", errorMessage: "boom" } },
+  ]);
+  await emit("agent_settled");
+  await new Promise<void>((r) => setTimeout(r, 10));
+  expect(bridge.send).toHaveBeenCalledOnce();
+ });
+
+ test("a ping is sent immediately when not silent", async () => {
+  const { pi, bridge } = await setup();
+  pi.events.emit("notify:ping", { message: "Example work (J-001): approve the deploy" });
+  await vi.waitFor(() => expect(bridge.send).toHaveBeenCalledOnce());
+  expect(bridge.send.mock.calls[0][0]).toContain("approve the deploy");
+ });
+
+ test("/silent holds pings and user-turn summaries, then sends one digest when it ends", async () => {
+  const { pi, ctx, emit, command, bridge } = await setup();
+  await command("silent", "30m");
+  pi.events.emit("notify:ping", { message: "first item" });
+  pi.events.emit("notify:ping", { message: "second item" });
+  ctx.sessionManager.getBranch.mockReturnValue([
+   { type: "message", message: { role: "user", content: "hi" } },
+   { type: "message", message: { role: "assistant", content: [{ type: "text", text: "hello" }], stopReason: "end_turn" } },
+  ]);
+  await emit("agent_settled");
+  await new Promise<void>((r) => setTimeout(r, 10));
+  expect(bridge.send).not.toHaveBeenCalled();
+
+  await command("silent", "off");
+  await vi.waitFor(() => expect(bridge.send).toHaveBeenCalledOnce());
+  const [text] = bridge.send.mock.calls[0] as [string];
+  expect(text).toContain("2 item(s) need you");
+  expect(text).toContain("first item");
+  expect(text).toContain("second item");
+ });
+
+ test("/silent expires on its own", async () => {
+  vi.useFakeTimers();
+  try {
+   const { pi, command, bridge } = await setup();
+   await command("silent", "1m");
+   pi.events.emit("notify:ping", { message: "held" });
+   expect(bridge.send).not.toHaveBeenCalled();
+   await vi.advanceTimersByTimeAsync(61_000);
+   expect(bridge.send).toHaveBeenCalledOnce();
+   pi.events.emit("notify:ping", { message: "after" });
+   await vi.advanceTimersByTimeAsync(0);
+   expect(bridge.send).toHaveBeenCalledTimes(2);
+  } finally {
+   vi.useRealTimers();
+  }
  });
 });

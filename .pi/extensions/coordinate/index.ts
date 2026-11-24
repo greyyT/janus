@@ -1,14 +1,13 @@
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createServer, type Server } from "node:net";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { coordinateCompaction } from "./compact.ts";
 import { footerLines, type CoordinatorView } from "./footer.ts";
+import { claimSocket, drainSpool, loadRegistry, registryPathFor, saveRegistry, socketPathFor, spoolDirFor, type SavedCoordinator } from "./registry.ts";
 
 type Workspace = { workspace_id: string; label: string };
 type Mode = { janusPane: string; workspace: Workspace };
@@ -19,8 +18,14 @@ const NEW_WORKSPACE = "New workspace…";
 const COORDINATOR_DIR = fileURLToPath(new URL("../../../coordinator", import.meta.url));
 const TAB_STARTUP_MS = 5_000;
 const PI_STARTUP_MS = 2_000;
-const SOCKET_PATH = join(tmpdir(), `janus-coordinate-${process.pid}.sock`);
+// Local, not durable knowledge: the per-workspace coordinator registry.
+const REGISTRY_DIR = fileURLToPath(new URL("../../../.janus/coordinate", import.meta.url));
 const COORDINATE_MODE_PROMPT = new URL("coordinate-mode.md", import.meta.url);
+// Greyy's ping criteria live apart so they can change any time without touching the mode rules.
+const PING_CRITERIA = new URL("ping-criteria.md", import.meta.url);
+const PING_CHANNEL = "notify:ping";
+// Local temporary opt-out: keep /coordinate and result delivery, hide the new live footer.
+const ENABLE_COORDINATOR_FOOTER = true;
 
 // `/coordinate` is one-way: once on, the mode lasts until the session is killed.
 // Coordinators run in the chosen Herdr workspace and report each stop over a
@@ -36,6 +41,17 @@ export default function coordinate(pi: ExtensionAPI): void {
   let lastOutcome: string | undefined;
   const coordinators = new Map<string, Coordinator>();
   const pendingResults: string[] = [];
+  // Set when the mode turns on; both depend only on the chosen workspace.
+  let socketPath = "";
+  let registryPath = "";
+  const persist = () => {
+    if (!registryPath) return;
+    const saved: Record<string, SavedCoordinator> = {};
+    for (const [id, { name, repo, tabId, paneId, startedAt }] of coordinators) saved[id] = { name, repo, tabId, paneId, startedAt };
+    saveRegistry(registryPath, saved);
+  };
+  const queueResult = (id: string, name: string, result: string) =>
+    pendingResults.push(`<coordinator_result id="${id}" name="${name}">\n${result}\n</coordinator_result>`);
 
   const herdr = async (args: string[], signal?: AbortSignal) => {
     const { code, stdout, stderr } = await pi.exec("herdr", args, { signal });
@@ -52,6 +68,8 @@ export default function coordinate(pi: ExtensionAPI): void {
   // fresh session a handoff creates, and `{ id, result }` at each stop.
   const receiveReport = (payload: string, ctx: ExtensionCommandContext) => {
     let report: { id: string; result?: string; pane?: string; activity?: "working" | "tool" | "idle" | "usage"; tool?: string; percent?: number | null };
+    // An empty connection is another Janus checking whether this socket is live.
+    if (!payload.trim()) return;
     try {
       report = JSON.parse(payload);
     } catch {
@@ -63,6 +81,7 @@ export default function coordinate(pi: ExtensionAPI): void {
     if (report.pane !== undefined) {
       if (coordinator.paneId !== report.pane) {
         coordinator.paneId = report.pane;
+        persist();
         ctx.ui.notify(`Coordinator ${report.id} (${coordinator.name}) continues in pane ${report.pane}.`, "info");
       }
       return;
@@ -81,7 +100,7 @@ export default function coordinate(pi: ExtensionAPI): void {
     const reason = status === "failed" ? /^OUTCOME:\s*\n([^\n]+)/m.exec(report.result)?.[1] : undefined;
     coordinator.activity = reason ? reason.slice(0, 160) : status === "completed" ? "Report ready" : status === "blocked" ? "Blocked" : status === "needs_input" ? "Needs input" : "Failed";
     requestFooterRender();
-    pendingResults.push(`<coordinator_result id="${report.id}" name="${coordinator.name}">\n${report.result}\n</coordinator_result>`);
+    queueResult(report.id, coordinator.name, report.result);
     if (isJanusIdle()) deliverNextResult();
   };
 
@@ -94,12 +113,13 @@ export default function coordinate(pi: ExtensionAPI): void {
         socket.on("end", () => receiveReport(payload, ctx));
       });
       resultServer.once("error", reject);
-      resultServer.listen(SOCKET_PATH, () => resolve(resultServer));
+      resultServer.listen(socketPath, () => resolve(resultServer));
     });
 
-  // Read on every run so edits to coordinate-mode.md apply without a restart.
+  // Read on every run so edits to coordinate-mode.md and ping-criteria.md apply without a restart.
   pi.on("before_agent_start", event => {
-    if (mode) event.systemPromptOptions.sections["system-reminder"] = readFileSync(COORDINATE_MODE_PROMPT, "utf8").trim();
+    if (mode) event.systemPromptOptions.sections["system-reminder"] =
+      `${readFileSync(COORDINATE_MODE_PROMPT, "utf8").trim()}\n\n${readFileSync(PING_CRITERIA, "utf8").trim()}`;
   });
   // pi skips agent_before_settle when a run is aborted, so a run with no
   // recorded outcome by agent_settled was aborted.
@@ -158,11 +178,12 @@ export default function coordinate(pi: ExtensionAPI): void {
         const { tab, root_pane: pane }: TabCreated = await herdr(
           [
             "tab", "create", "--workspace", workspace.workspace_id, "--cwd", COORDINATOR_DIR, "--label", id, "--no-focus",
-            "--env", `JANUS_COORDINATE_SOCKET=${SOCKET_PATH}`, "--env", `JANUS_COORDINATOR_ID=${id}`,
+            "--env", `JANUS_COORDINATE_SOCKET=${socketPath}`, "--env", `JANUS_COORDINATOR_ID=${id}`,
           ],
           signal,
         );
         coordinators.set(id, { name, repo, tabId: tab.tab_id, paneId: pane.pane_id, startedAt: Date.now(), state: "idle", activity: "Starting" });
+        persist();
         requestFooterRender();
         await sleep(TAB_STARTUP_MS, undefined, { signal });
         await herdr(["pane", "run", pane.pane_id, "pi"], signal);
@@ -173,6 +194,20 @@ export default function coordinate(pi: ExtensionAPI): void {
           content: [{ type: "text", text: `Started ${id} (${name}) in tab ${tab.tab_id} (pane ${pane.pane_id}) and sent the request.` }],
           details: { id, name, tabId: tab.tab_id, paneId: pane.pane_id, repo },
         };
+      },
+    });
+
+    pi.registerTool({
+      name: "ping_user",
+      label: "Ping Greyy",
+      description:
+        "Send Greyy one Telegram ping because a coordinator result needs him now, per the ping criteria. Turns triggered by coordinator results send nothing else to Telegram. Record the item in its ticket first; the ping only points to it. Held during /silent and delivered as a digest after.",
+      parameters: Type.Object({
+        message: Type.String({ minLength: 1, description: "One line: the ticket title and ID, and exactly what Greyy must do." }),
+      }),
+      async execute(_toolCallId, { message }) {
+        pi.events.emit(PING_CHANNEL, { message });
+        return { content: [{ type: "text", text: "Ping handed to the notifier (sent now, or held until silence ends)." }], details: undefined };
       },
     });
 
@@ -220,6 +255,7 @@ export default function coordinate(pi: ExtensionAPI): void {
         const { name, tabId } = findCoordinator(id);
         await herdr(["tab", "close", tabId], signal);
         coordinators.delete(id);
+        persist();
         requestFooterRender();
         return { content: [{ type: "text", text: `Stopped ${id} (${name}) and closed tab ${tabId}.` }], details: undefined };
       },
@@ -240,7 +276,31 @@ export default function coordinate(pi: ExtensionAPI): void {
   };
 
   const describe = ({ janusPane, workspace }: Mode) =>
-    `coordinators run in workspace ${workspace.label} (${workspace.workspace_id}); Janus pane ${janusPane} receives results on ${SOCKET_PATH}`;
+    `coordinators run in workspace ${workspace.label} (${workspace.workspace_id}); Janus pane ${janusPane} receives results on ${socketPath}`;
+
+  // Re-adopt coordinators a previous Janus spawned in this workspace whose panes
+  // are still alive, and queue results they spooled while Janus was down.
+  const reattach = async (): Promise<string> => {
+    const saved = loadRegistry(registryPath);
+    const { panes }: { panes: { pane_id: string }[] } = await herdr(["pane", "list"]);
+    const alive = new Set(panes.map(p => p.pane_id));
+    const lost: string[] = [];
+    for (const [id, entry] of Object.entries(saved)) {
+      if (alive.has(entry.paneId)) coordinators.set(id, { ...entry, state: "idle", activity: "Reattached" });
+      else lost.push(`${id} (${entry.name})`);
+    }
+    let spooled = 0;
+    for (const { id, result } of drainSpool(spoolDirFor(socketPath))) {
+      const name = coordinators.get(id)?.name ?? saved[id]?.name ?? "unknown";
+      queueResult(id, name, result);
+      spooled++;
+    }
+    persist();
+    const parts = [`reattached ${coordinators.size} coordinator(s)`];
+    if (lost.length) parts.push(`lost ${lost.join(", ")} (pane gone)`);
+    if (spooled) parts.push(`${spooled} result(s) saved while Janus was down are queued`);
+    return parts.join("; ");
+  };
 
   pi.registerCommand("coordinate", {
     description: "Turn on coordinator mode for this session (no off), or `/coordinate status`",
@@ -284,29 +344,44 @@ export default function coordinate(pi: ExtensionAPI): void {
         return;
       }
 
+      socketPath = socketPathFor(workspace.workspace_id);
+      registryPath = registryPathFor(REGISTRY_DIR, workspace.workspace_id);
+      if ((await claimSocket(socketPath)) === "taken") {
+        ctx.ui.notify(`Coordinator mode stays off: another Janus already coordinates workspace ${workspace.label}.`, "error");
+        return;
+      }
       try {
         server = await listenForResults(ctx);
       } catch (error) {
-        ctx.ui.notify(`Coordinator mode stays off: cannot listen on ${SOCKET_PATH}: ${(error as Error).message}`, "error");
+        ctx.ui.notify(`Coordinator mode stays off: cannot listen on ${socketPath}: ${(error as Error).message}`, "error");
         return;
+      }
+      let reattached = "";
+      try {
+        reattached = await reattach();
+      } catch (error) {
+        reattached = `could not reattach earlier coordinators: ${(error as Error).message}`;
       }
       isJanusIdle = () => ctx.isIdle();
       mode = { janusPane, workspace };
-      ctx.ui.setFooter((tui, theme) => {
-        requestFooterRender = () => tui.requestRender();
-        return {
-          render: (width: number) => footerLines(coordinators.values(), width, Date.now(), (icon, state) =>
-            theme.fg(state === "working" || state === "completed" ? "success" : state === "failed" ? "error" : state === "idle" ? "muted" : "warning", icon)),
-          invalidate: () => tui.requestRender(),
-          dispose: () => { requestFooterRender = () => {}; },
-        };
-      });
-      footerTimer = setInterval(() => requestFooterRender(), 600);
-      footerTimer.unref();
+      if (ENABLE_COORDINATOR_FOOTER) {
+        ctx.ui.setFooter((tui, theme) => {
+          requestFooterRender = () => tui.requestRender();
+          return {
+            render: (width: number) => footerLines(coordinators.values(), width, Date.now(), (icon, state) =>
+              theme.fg(state === "working" || state === "completed" ? "success" : state === "failed" ? "error" : state === "idle" ? "muted" : "warning", icon)),
+            invalidate: () => tui.requestRender(),
+            dispose: () => { requestFooterRender = () => {}; },
+          };
+        });
+        footerTimer = setInterval(() => requestFooterRender(), 600);
+        footerTimer.unref();
+      }
       // Marks the transcript so Dream ignores everything from here on (tools/brain/lib/sessions.ts).
       pi.appendEntry("janus-coordinate");
       registerTools(workspace);
-      ctx.ui.notify(`Coordinator mode is on until this session ends; ${describe(mode)}.`, "info");
+      ctx.ui.notify(`Coordinator mode is on until this session ends; ${describe(mode)}; ${reattached}.`, "info");
+      if (pendingResults.length && ctx.isIdle()) deliverNextResult();
     },
   });
 }

@@ -14,6 +14,13 @@ import {
   TelegramQuestionnaire,
   type QuestionnaireState,
 } from "./lib/telegram-questionnaire.ts";
+import { formatClock, parseSilentArg } from "./lib/silent.ts";
+
+// Coordinate mode delivers coordinator results as user messages with this
+// wrapper. Turns they trigger stay off Telegram unless Janus calls `ping_user`.
+const COORDINATOR_RESULT = "<coordinator_result";
+export const PING_CHANNEL = "notify:ping";
+export type Ping = { message: string };
 
 const TLDR_MODELS = [
   ["claude-bridge", "claude-haiku-4-5"],
@@ -156,9 +163,81 @@ export default function notifyUserExtension(pi: ExtensionAPI) {
   let runStartedAt: number | undefined;
   let bridge: TelegramBridge | undefined;
   let questionnaire: TelegramQuestionnaire | undefined;
+  // `/silent` state: every Janus message is held until `silentUntil`, then the
+  // held pings arrive as one digest. Silence always expires on its own.
+  let silentUntil: number | undefined;
+  let silentTimer: ReturnType<typeof setTimeout> | undefined;
+  let heldPings: string[] = [];
+  let lastCtx: ExtensionContext | undefined;
 
   pi.events.on("questionnaire:state", (data) => {
     questionnaire?.update(data as QuestionnaireState);
+  });
+
+  const isSilent = () => silentUntil !== undefined && Date.now() < silentUntil;
+
+  function endSilence(reason: "expired" | "off") {
+    if (silentTimer) clearTimeout(silentTimer);
+    silentTimer = undefined;
+    silentUntil = undefined;
+    const held = heldPings;
+    heldPings = [];
+    const ctx = lastCtx;
+    if (!ctx) return;
+    ctx.ui.notify(
+      `notify-user: silence ${reason === "off" ? "turned off" : "ended"}; ${held.length} held ping(s).`,
+      "info",
+    );
+    if (held.length === 0) return;
+    const label = escapeHtml(sessionLabel(ctx));
+    const items = held.map((text) => `• ${inlineHtml(text)}`).join("\n");
+    void sendTelegram(
+      ctx,
+      `🔕 <b>${label}</b> focus block over. ${held.length} item(s) need you:\n\n${items}`,
+    );
+  }
+
+  pi.events.on(PING_CHANNEL, (data) => {
+    const { message } = data as Ping;
+    const ctx = lastCtx;
+    if (!message?.trim() || !ctx) return;
+    if (isSilent()) {
+      heldPings.push(message.trim());
+      return;
+    }
+    const label = escapeHtml(sessionLabel(ctx));
+    void sendTelegram(ctx, `🔔 <b>${label}</b> needs you\n\n${inlineHtml(message.trim())}`);
+  });
+
+  pi.registerCommand("silent", {
+    description: "Hold Janus Telegram messages for a focus block: /silent [90m | 2h | until 17:00 | off | status] (default 3h)",
+    handler: async (args: string, ctx: ExtensionContext) => {
+      lastCtx = ctx;
+      const parsed = parseSilentArg(args, Date.now());
+      if (parsed.kind === "error") {
+        ctx.ui.notify(parsed.message, "warning");
+        return;
+      }
+      if (parsed.kind === "status") {
+        ctx.ui.notify(
+          isSilent()
+            ? `Silent until ${formatClock(silentUntil!)}; ${heldPings.length} held ping(s).`
+            : "Notifications are on.",
+          "info",
+        );
+        return;
+      }
+      if (parsed.kind === "off") {
+        if (isSilent()) endSilence("off");
+        else ctx.ui.notify("Notifications are already on.", "info");
+        return;
+      }
+      if (silentTimer) clearTimeout(silentTimer);
+      silentUntil = parsed.until;
+      silentTimer = setTimeout(() => endSilence("expired"), parsed.until - Date.now());
+      silentTimer.unref?.();
+      ctx.ui.notify(`Silent until ${formatClock(parsed.until)}. Pings are held and sent as one digest after.`, "info");
+    },
   });
 
   async function sendTelegram(
@@ -166,7 +245,7 @@ export default function notifyUserExtension(pi: ExtensionAPI) {
     text: string,
     details?: string,
   ) {
-    if (!bridge) return;
+    if (!bridge || isSilent()) return;
     try {
       await bridge.send(text, { details });
     } catch (error) {
@@ -175,6 +254,7 @@ export default function notifyUserExtension(pi: ExtensionAPI) {
   }
 
   async function startSession(_event: unknown, ctx: ExtensionContext) {
+    lastCtx = ctx;
     const previousBridge = bridge;
     bridge = undefined;
     await questionnaire?.close();
@@ -234,6 +314,11 @@ export default function notifyUserExtension(pi: ExtensionAPI) {
     questionnaire = undefined;
     previousBridge?.close();
     runStartedAt = undefined;
+    if (silentTimer) clearTimeout(silentTimer);
+    silentTimer = undefined;
+    silentUntil = undefined;
+    heldPings = [];
+    lastCtx = undefined;
   });
 
   pi.on("agent_start", async () => {
@@ -245,6 +330,7 @@ export default function notifyUserExtension(pi: ExtensionAPI) {
     runStartedAt = undefined;
 
     // Without a bridge there is nothing to send; startSession already warned.
+    lastCtx = ctx;
     const message = lastMessage(ctx, "assistant");
     if (!bridge || !message || message.stopReason === "aborted") return;
 
@@ -257,6 +343,10 @@ export default function notifyUserExtension(pi: ExtensionAPI) {
       );
       return;
     }
+    // Coordinator-triggered turns notify only through `ping_user`; a failed
+    // turn still reports above, since nothing else would surface it.
+    const trigger = textOf(lastMessage(ctx, "user")?.content ?? "");
+    if (trigger.startsWith(COORDINATOR_RESULT)) return;
 
     const header = `✅ <b>${label}</b> done in ${formatDuration(duration)}`;
     const contextUsage = ctx.getContextUsage();

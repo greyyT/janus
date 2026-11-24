@@ -54,6 +54,7 @@ const CONNECT_TIMEOUT_MS = 8_000;
 const BACKOFF_BASE_MS = 1_000;
 const BACKOFF_MAX_MS = 30_000;
 const DETAILS_BUTTON = "Details";
+const OWNERSHIP_CHECK_MS = 2_000; // how often a receiver verifies it still owns the socket path
 const NEW_SOCKET_AGE_MS = 2_000; // sockets younger than this are never unlinked
 
 // ── Protocol ──────────────────────────────────────────────────────────────────
@@ -165,6 +166,24 @@ function chunkText(text: string, max = MAX_MSG_CHARS): string[] {
   i = end;
  }
  return chunks;
+}
+
+// Render a conservative Markdown subset. Never pass source HTML to Telegram.
+function renderDetailHtml(text: string): string {
+ const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+ const tokens = /^```[^\n]*\n([\s\S]*?)^```[ \t]*(?=\r?$)|(`+)([^\n]+?)\2|\*\*([^\n]+?)\*\*|__([^\n]+?)__|\*([^*\n]+)\*|(?<!\w)_([^_\n]+)_(?!\w)|^#{1,6}[ \t]+([^\n]+)/gm;
+ let html = "";
+ let end = 0;
+ for (const match of text.matchAll(tokens)) {
+  const [raw, block, , code, bold, strong, italic, emphasis, heading] = match;
+  html += escape(text.slice(end, match.index));
+  if (block !== undefined) html += `<pre>${escape(block || "\n")}</pre>`;
+  else if (code !== undefined) html += `<code>${escape(code)}</code>`;
+  else if (italic !== undefined || emphasis !== undefined) html += `<i>${escape(italic ?? emphasis!)}</i>`;
+  else html += `<b>${escape(bold ?? strong ?? heading!)}</b>`;
+  end = match.index + raw.length;
+ }
+ return html + escape(text.slice(end));
 }
 
 function writeMsg(socket: Socket, msg: ClientMsg | ReceiverMsg): void {
@@ -719,7 +738,7 @@ async function runReceiver(socketPath: string, chatId: string, token: string): P
     if (abortCtrl.signal.aborted) { detail.sending = false; return; }
     try {
      const resp = await telegramPost(token, "sendMessage",
-      { chat_id: chatId, text: chunk, reply_parameters: { message_id: detail.summaryMsgId } },
+      { chat_id: chatId, text: renderDetailHtml(chunk), parse_mode: "HTML", reply_parameters: { message_id: detail.summaryMsgId } },
       AbortSignal.any([abortCtrl.signal, AbortSignal.timeout(15_000)]));
      if (resp.ok) {
       const cid = (resp.result as TgMessage).message_id;
@@ -859,6 +878,22 @@ async function runReceiver(socketPath: string, chatId: string, token: string): P
 
  server.removeAllListeners("error");
  server.on("error", (err) => { process.stderr.write(`telegram-bridge receiver: ${err}\n`); });
+
+ // Ownership guard: a newer receiver may unlink our socket after a failed liveness probe and
+ // bind its own. Two getUpdates pollers then fight forever with Telegram 409s. If the path no
+ // longer points at our socket, stop polling and exit without unlinking the successor's socket.
+ const ownIno = (await stat(socketPath)).ino;
+ const ownershipTimer = setInterval(() => {
+  void stat(socketPath).then((s) => s.ino, () => null).then((ino) => {
+   if (ino === ownIno) return;
+   clearInterval(ownershipTimer);
+   abortCtrl.abort();
+   for (const [sock] of clients) sock.destroy();
+   // No server.close(): Node unlinks a Unix socket path on close, deleting the successor's socket.
+   process.exit(0);
+  });
+ }, OWNERSHIP_CHECK_MS);
+ ownershipTimer.unref();
 
  const onShutdown = (): void => {
   abortCtrl.abort();

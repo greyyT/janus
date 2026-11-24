@@ -1,4 +1,6 @@
+import { mkdirSync, writeFileSync } from "node:fs";
 import { createConnection } from "node:net";
+import { join } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 const STATUS_LINE = /^STATUS: (completed|blocked|needs_input|failed)$/;
@@ -145,7 +147,16 @@ export default function janusReport(pi: ExtensionAPI): void {
     try {
       await sendToJanus({ result });
     } catch (error) {
-      ctx.ui.notify(`Could not report to Janus at ${socketPath}: ${(error as Error).message}`, "error");
+      // Janus is down or restarting: spool the result where the next Janus on
+      // this workspace drains it (`${socketPath}.spool`, see Janus's coordinate/registry.ts).
+      try {
+        const spoolDir = `${socketPath}.spool`;
+        mkdirSync(spoolDir, { recursive: true });
+        writeFileSync(join(spoolDir, `${Date.now()}-${coordinatorId}.json`), JSON.stringify({ id: coordinatorId, result }));
+        ctx.ui.notify("Janus is not reachable; the result is saved for when Janus coordinates this workspace again.", "warning");
+      } catch (spoolError) {
+        ctx.ui.notify(`Could not report to Janus at ${socketPath} (${(error as Error).message}) or save the result: ${(spoolError as Error).message}`, "error");
+      }
     }
   });
 }

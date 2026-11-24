@@ -31,6 +31,7 @@ A ticket file has a `# Title · J-NNN` heading and these fields:
 - `## Acceptance`: checklist, checked only on observable evidence;
 - `## Goal commitment`, only for explicitly agreed goal work: the near-term promised output, block references, evidence, and verified postponement count. The goal skill and `brain/projects/janus/Janus Goal Workflow.md` own its contract. Preserve it during ordinary checkpoints; never infer a commitment from `goal` metadata or reset its count on rescheduling. Its event history stays in this ticket's append-only work log. For shared routine-reading agreements it may instead link to the book-owned `## Reading commitment`; follow the book skill and verify/count only in the authoritative owner, never in duplicate;
 - `## Grants`, only when the user granted permissions for this work: `work`-scope grants in the `brain/Grants.md` entry format without an ID, expiring at `ticket close` unless stated otherwise;
+- `## Pending for Greyy`, only while coordinator results wait on the user: one entry per open item (date, coordinator ID, question or action, options, coordinator's and Janus's recommendations, what is blocked). Coordinate mode owns it; remove an entry once answered and relayed, since the decision itself goes to the work log.
 - `## Work log`: dated entries, append-only. Each decision the user makes is its own `Decision (user):` line, written through the decisions skill.
 
 Do not manufacture implementation steps that do not reduce uncertainty. Do not accumulate superseded next moves in the header; history belongs in the work log.
@@ -113,7 +114,7 @@ Trigger: the user describes work that should survive the conversation.
 
 Trigger: the user begins or resumes work on a ticket, or asks what to work on.
 
-1. Preconditions: `waiting` cannot start until its blocker resolves. When the user asks what to work on, recommend one ticket, not a menu: a `human_required` ticket first, then `ready` work serving an active goal or project, weighed against `brain/Working Model.md`. Start it once the user agrees.
+1. Preconditions: `waiting` cannot start until its blocker resolves. When the user asks what to work on, recommend one ticket, not a menu: weigh `human_required` work against the current time, employment obligations and protected personal-growth window before `ready` work serving an active goal or project. On a normal workday, prioritize personally required company work and authorized autonomous handoffs in the morning; reserve the afternoon for personal-growth focus unless genuine urgency displaces it. An agent handoff is not completion, and its reviews still cost user attention. Start once the user agrees.
 2. Move `ready` → `active` on the board. Do not duplicate entries for `active` or `verifying`. Set `execution`: `human_required` when the user works it themselves, `autonomous` when Janus hands it to a coordinator.
 3. Brief from Janus context only — do not inspect the source repository during the briefing itself. In natural language:
    - the immediate purpose and the live question that matters now;
